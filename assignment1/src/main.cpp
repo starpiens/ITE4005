@@ -35,7 +35,7 @@ vector<txn_t> read_transactions(ifstream &ifs) {
     return ret;
 }
 
-vector<AssociationRule> find_association_rules(const vector<txn_t>& txns, int min_support) {
+vector<AssociationRule> find_association_rules(const vector<txn_t> &txns, int min_support) {
     vector<AssociationRule> ret;
 
     // TODO
@@ -44,7 +44,7 @@ vector<AssociationRule> find_association_rules(const vector<txn_t>& txns, int mi
     return ret;
 }
 
-ofstream& operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
+ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     for (auto rule : rules) {
         ofs << "{" << *rule.item_set.begin();
         for (auto it = ++rule.item_set.begin(); it != rule.item_set.end(); ++it) {
@@ -65,18 +65,19 @@ ofstream& operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     return ofs;
 }
 
-int main(int argc, const char *argv[]) {
+int main(int argc, char *argv[]) {
     if (argc < 4) {
         cerr << "usage: apriori [0-100] input_file output_file" << endl;
         return 1;
     }
 
-    const int min_support = (int) strtol(argv[1], nullptr, 0);
+    char *tmp_ptr = argv[1];
+    const int min_support = (int) strtol(argv[1], &tmp_ptr, 0);
     ifstream ifs(argv[2]);
     ofstream ofs(argv[3]);
-    if (min_support < 0 || min_support > 100) {
-        cerr << "minimum support must be [0-100].";
-        return 1;
+    if (min_support < 0 || min_support > 100 || argv[1] == tmp_ptr) {
+        cerr << "minimum support must be integer [0-100].";
+        return EINVAL;
     } else if (!ifs.good()) {
         cerr << "cannot open input file: " << argv[2];
         return 1;

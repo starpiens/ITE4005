@@ -13,7 +13,7 @@ using namespace std;
 using item_id_t = int;
 using txn_t = vector<item_id_t>;
 
-typedef struct {
+typedef struct AssociationRule {
   set<item_id_t> item_set;
   set<item_id_t> associative_item_set;
   float support;
@@ -39,11 +39,12 @@ vector<AssociationRule> find_association_rules(const vector<txn_t>& txns, int mi
     vector<AssociationRule> ret;
 
     // TODO
+    ret.push_back({{1, 2, 3}, {4, 5}, .319, .1415});
 
     return ret;
 }
 
-void write_association_rules(ofstream &ofs, const vector<AssociationRule>& rules) {
+ofstream& operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     for (auto rule : rules) {
         ofs << "{" << *rule.item_set.begin();
         for (auto it = ++rule.item_set.begin(); it != rule.item_set.end(); ++it) {
@@ -51,13 +52,17 @@ void write_association_rules(ofstream &ofs, const vector<AssociationRule>& rules
         }
         ofs << "}\t";
         ofs << "{" << *rule.associative_item_set.begin();
-        for (auto it = ++rule.item_set.begin(); it != rule.associative_item_set.end(); ++it) {
+        for (auto it = ++rule.associative_item_set.begin(); it != rule.associative_item_set.end(); ++it) {
             ofs << "," << *it;
         }
         ofs << "}\t";
-        ofs << setprecision(2) << rule.support << "\t";
-        ofs << setprecision(2) << rule.confidence << "\n";
+        auto ori_precision = ofs.precision();
+        ofs.precision(2);
+        ofs << rule.support << "\t";
+        ofs << rule.confidence << "\n";
+        ofs.precision(ori_precision);
     }
+    return ofs;
 }
 
 int main(int argc, const char *argv[]) {
@@ -82,7 +87,7 @@ int main(int argc, const char *argv[]) {
 
     auto txns = read_transactions(ifs);
     auto asc_rules = find_association_rules(txns, min_support);
-    write_association_rules(ofs, asc_rules);
+    ofs << asc_rules;
 
     ifs.close();
     ofs.close();

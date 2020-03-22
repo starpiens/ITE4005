@@ -19,6 +19,11 @@ using AssociationRule = struct {
   float confidence;
 };
 
+/**
+ * Read transactions from `ifs`.
+ * @param ifs Input file stream.
+ * @return Vector of transaction.
+ */
 vector<txn_t> read_transactions(ifstream &ifs) {
     vector<txn_t> txns;
     string txn_str;
@@ -33,9 +38,15 @@ vector<txn_t> read_transactions(ifstream &ifs) {
     return txns;
 }
 
+/**
+ * Find frequent item sets using Apriori algorithm.
+ * @param txns Vector of transaction.
+ * @param min_support Minimum support value in percentage.
+ * @return Vector of frequent item set.
+ */
 vector<item_set_t> find_frequent_item_sets(const vector<txn_t> &txns, const int min_support) {
     vector<item_set_t> freq_item_sets;
-    const int support_threshold = (int)ceil(min_support * txns.size() / 100.);
+    const int support_threshold = (int) ceil(min_support * txns.size() / 100.);
 
     unordered_map<item_id_t, int> item_cnt;
     for (const auto &txn : txns) {
@@ -55,6 +66,12 @@ vector<item_set_t> find_frequent_item_sets(const vector<txn_t> &txns, const int 
     return freq_item_sets;
 }
 
+/**
+ * Find association rules.
+ * @param txns Vector of transactions.
+ * @param min_support Minimum support value in percentage.
+ * @return Vector of association rule.
+ */
 vector<AssociationRule> find_association_rules(const vector<txn_t> &txns, const int min_support) {
     vector<AssociationRule> assc_rules;
 
@@ -65,17 +82,23 @@ vector<AssociationRule> find_association_rules(const vector<txn_t> &txns, const 
     return assc_rules;
 }
 
+/**
+ * Overloads operator<< to write association rules on file stream.
+ * @param ofs Output file stream.
+ * @param rules Vector of association rule.
+ * @return `ofs`.
+ */
 ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     for (const auto &rule : rules) {
         ofs << "{" << *rule.item_set.begin();
-        for (auto it = ++rule.item_set.begin(); it != rule.item_set.end(); ++it) {
-            ofs << "," << *it;
-        }
+        for_each(++rule.item_set.begin(), rule.item_set.end(), [&ofs](const auto &item) {
+            ofs << "," << item;
+        });
         ofs << "}\t";
         ofs << "{" << *rule.associative_item_set.begin();
-        for (auto it = ++rule.associative_item_set.begin(); it != rule.associative_item_set.end(); ++it) {
-            ofs << "," << *it;
-        }
+        for_each(++rule.associative_item_set.begin(), rule.associative_item_set.end(), [&ofs](const auto &item) {
+            ofs << "," << item;
+        });
         ofs << "}\t";
         auto ori_precision = ofs.precision();
         ofs.precision(2);
@@ -86,8 +109,16 @@ ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     return ofs;
 }
 
+/**
+ * Solves assignment1, finding association rules of given transactions.
+ * @param argc Argument count, which must be 4.
+ * @param argv[1] Minimum support value in percentage.
+ * @param argv[2] Input file path.
+ * @param argv[3] Output file path.
+ * @return Returns 0 if no error occurred, non-zero value otherwise.
+ */
 int main(int argc, char *argv[]) {
-    if (argc < 4) {
+    if (argc != 4) {
         cerr << "usage: apriori [0-100] input_file output_file" << endl;
         return 1;
     }

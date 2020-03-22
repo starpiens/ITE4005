@@ -1,51 +1,72 @@
 #include <exception>
 #include <fstream>
 #include <vector>
-#include <string>
 #include <sstream>
 #include <iostream>
-#include <map>
-#include <set>
-#include <cmath>
+#include <unordered_set>
+#include <unordered_map>
 
 using namespace std;
 
 using item_id_t = int;
 using txn_t = vector<item_id_t>;
+using item_set_t = unordered_set<item_id_t>;
 
-typedef struct AssociationRule {
-  set<item_id_t> item_set;
-  set<item_id_t> associative_item_set;
+using AssociationRule = struct {
+  item_set_t item_set;
+  item_set_t associative_item_set;
   float support;
   float confidence;
-} AssociationRule;
+};
 
 vector<txn_t> read_transactions(ifstream &ifs) {
-    vector<txn_t> ret;
+    vector<txn_t> txns;
     string txn_str;
     while (getline(ifs, txn_str)) {
+        txns.resize(txns.size() + 1);
         istringstream iss(txn_str);
         item_id_t item;
-        txn_t txn;
         while (iss >> item) {
-            txn.push_back(item);
+            txns.back().push_back(item);
         }
-        ret.push_back(txn);
     }
-    return ret;
+    return txns;
 }
 
-vector<AssociationRule> find_association_rules(const vector<txn_t> &txns, int min_support) {
-    vector<AssociationRule> ret;
+vector<item_set_t> find_frequent_item_sets(const vector<txn_t> &txns, const int min_support) {
+    vector<item_set_t> freq_item_sets;
+    const int support_threshold = (int)ceil(min_support * txns.size() / 100.);
+
+    unordered_map<item_id_t, int> item_cnt;
+    for (const auto &txn : txns) {
+        for (const auto &item : txn) {
+            item_cnt[item]++;
+        }
+    }
+    unordered_set<item_id_t> freq_item_set;
+    for (const auto &item : item_cnt) {
+        if (item.second >= support_threshold) {
+            freq_item_set.insert(item.first);
+        }
+    }
 
     // TODO
-    ret.push_back({{1, 2, 3}, {4, 5}, .319, .1415});
 
-    return ret;
+    return freq_item_sets;
+}
+
+vector<AssociationRule> find_association_rules(const vector<txn_t> &txns, const int min_support) {
+    vector<AssociationRule> assc_rules;
+
+    // TODO
+    auto freq_item_sets = find_frequent_item_sets(txns, min_support);
+    assc_rules.push_back({{1, 2, 3}, {4, 5}, .319, .1415});
+
+    return assc_rules;
 }
 
 ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
-    for (auto rule : rules) {
+    for (const auto &rule : rules) {
         ofs << "{" << *rule.item_set.begin();
         for (auto it = ++rule.item_set.begin(); it != rule.item_set.end(); ++it) {
             ofs << "," << *it;
@@ -76,7 +97,7 @@ int main(int argc, char *argv[]) {
     ifstream ifs(argv[2]);
     ofstream ofs(argv[3]);
     if (min_support < 0 || min_support > 100 || argv[1] == tmp_ptr) {
-        cerr << "minimum support must be integer [0-100].";
+        cerr << "minimum support must be integer [0-100]. (%)";
         return EINVAL;
     } else if (!ifs.good()) {
         cerr << "cannot open input file: " << argv[2];
@@ -87,8 +108,8 @@ int main(int argc, char *argv[]) {
     }
 
     auto txns = read_transactions(ifs);
-    auto asc_rules = find_association_rules(txns, min_support);
-    ofs << asc_rules;
+    auto assc_rules = find_association_rules(txns, min_support);
+    ofs << assc_rules;
 
     ifs.close();
     ofs.close();

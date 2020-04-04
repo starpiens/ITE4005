@@ -7,5 +7,6 @@ include_directories(include)
 
 add_executable(apriori
         src/main.cpp
-        src/ItemSet.cpp
-        src/AssociationRule.cpp)
+        src/Item.cpp
+        src/AssociationRule.cpp
+        src/Transaction.cpp)

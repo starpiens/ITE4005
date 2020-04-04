@@ -7,8 +7,9 @@
 #include <unordered_map>
 
 #include "globals.h"
-#include "ItemSet.h"
+#include "Item.h"
 #include "AssociationRule.h"
+#include "Transaction.h"
 
 using namespace std;
 
@@ -17,28 +18,36 @@ using namespace std;
  * @param ifs Input file stream.
  * @return Vector of transaction.
  */
-vector<txn_t> read_transactions(ifstream &ifs) {
-    vector<txn_t> txns;
+vector<Transaction> read_transactions(ifstream &ifs) {
+    vector<Transaction> vec_txn;
     string txn_str;
+    int txn_id = 0;
     while (getline(ifs, txn_str)) {
-        txns.resize(txns.size() + 1);
         istringstream iss(txn_str);
-        item_id_t item;
-        while (iss >> item) {
-            txns.back().push_back(item);
+        set<item_id_t> set_item_id;
+        item_id_t item_id;
+        while (iss >> item_id) {
+            set_item_id.insert(item_id);
         }
+        vec_txn.emplace_back(txn_id++, set_item_id);
     }
-    return txns;
+    return vec_txn;
 }
 
 vector<ItemSet> transactions_to_itemsets(const vector<txn_t> &txns) {
-    unordered_map<item_id_t, vector<size_t>> um;
+    unordered_map<item_id_t, set<size_t>> um;
     for (txn_id_t txn_id = 0; txn_id < txns.size(); txn_id++) {
         for (auto item_id : txns[txn_id]) {
-            um[item_id].push_back(txn_id);
+            um[item_id].insert(txn_id);
         }
     }
 
+    vector<ItemSet> item_sets;
+    for (const auto &i : um) {
+        ItemSet new_itemset({i.first}, i.second);
+        item_sets.push_back(new_itemset);
+    }
+    return item_sets;
 }
 
 /**
@@ -50,13 +59,7 @@ vector<ItemSet> transactions_to_itemsets(const vector<txn_t> &txns) {
 vector<ItemSet> find_frequent_item_sets(const vector<txn_t> &txns, const int min_support) {
     vector<ItemSet> freq_item_sets;
 
-    unordered_set<item_set_t, > candidate_sets;
-    for (const auto &txn : txns) {
-        for (int i = 0; i < txn.size(); i++) {
-
-            txn[i]
-        }
-    }
+    auto candidate_sets = transactions_to_itemsets(txns);
     unordered_set<item_id_t> freq_item_set;
     for (const auto &item : item_cnt) {
         if (item.second >= min_support) {
@@ -75,20 +78,14 @@ vector<ItemSet> find_frequent_item_sets(const vector<txn_t> &txns, const int min
  * @param min_support Minimum support value in percentage.
  * @return Vector of association rule.
  */
-vector<AssociationRule> find_association_rules(const vector<txn_t> &txns, const int min_support) {
+vector<AssociationRule> find_association_rules(const vector<Transaction> &txns, const int min_support) {
     vector<AssociationRule> assc_rules;
 
-    // TODO
     auto freq_item_sets = find_frequent_item_sets(txns, min_support);
-    for (const auto &i : freq_item_sets) {
-        for (const auto &j: freq_item_sets) {
-            size_t cnt = 0;
-            for (auto id = i.txn_id.cbegin(); id != i.txn_id.cend(); id++)
+    for (const auto &freq_item_set : freq_item_sets) {
 
-            i.txn_id;
-            j.txn_id;
-        }
     }
+    // TODO
 
     return assc_rules;
 }

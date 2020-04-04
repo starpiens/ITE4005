@@ -2,7 +2,7 @@
 #define ASSIGNMENT1_ASSOCIATIONRULE_H
 
 #include "globals.h"
-#include "ItemSet.h"
+#include "Item.h"
 
 
 class AssociationRule {

@@ -6,4 +6,6 @@ set(CMAKE_CXX_STANDARD 14)
 include_directories(include)
 
 add_executable(apriori
-        src/main.cpp)
+        src/main.cpp
+        src/ItemSet.cpp
+        src/AssociationRule.cpp)

@@ -133,9 +133,11 @@ ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
         }
         ofs << "}\t";
         auto ori_precision = ofs.precision();
+        ofs << fixed;
         ofs.precision(2);
         ofs << 100. * rule.support / num_txns << "\t";
         ofs << 100. * rule.confidence << "\n";
+        ofs.unsetf(ios::fixed);
         ofs.precision(ori_precision);
     }
     return ofs;

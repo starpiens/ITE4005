@@ -21,7 +21,7 @@ size_t ItemSet::size() {
     return items.size();
 }
 
-size_t ItemSet::support() {
+size_t ItemSet::support() const {
     auto intersection = items.begin()->txns;
 
     for (auto it = ++items.begin(); it != items.end(); it++) {

@@ -48,14 +48,14 @@ vector<Item> read_items(ifstream &ifs) {
  * @param min_support Minimum support count.
  * @return Vector of vector of frequent item sets.
  */
-vector<vector<ItemSet>> find_frequent_item_sets(vector<Item> items, const int min_support) {
+vector<set<ItemSet>> find_frequent_item_sets(vector<Item> items, const int min_support) {
 
     items.erase(remove_if(items.begin(),
                           items.end(),
                           [min_support](auto &i) { return i.support() < min_support; }),
                 items.end());
 
-    vector<vector<ItemSet>> freq_item_sets(1);
+    vector<set<ItemSet>> freq_item_sets(1);
     vector<ItemSet> candidate_item_sets;
     candidate_item_sets.reserve(items.size());
     for (const auto &item : items) {
@@ -66,7 +66,7 @@ vector<vector<ItemSet>> find_frequent_item_sets(vector<Item> items, const int mi
         freq_item_sets.emplace_back();
         for (auto &candidate_item_set : candidate_item_sets) {
             if (candidate_item_set.support() >= min_support) {
-                freq_item_sets[k].push_back(candidate_item_set);
+                freq_item_sets[k].insert(candidate_item_set);
             }
         }
 
@@ -74,9 +74,9 @@ vector<vector<ItemSet>> find_frequent_item_sets(vector<Item> items, const int mi
         candidate_item_sets.clear();
 
         map<ItemSet, size_t> occurrence;
-        for (size_t i = 0; i < freq_item_sets[k].size() - 1; i++) {
-            for (size_t j = i + 1; j < freq_item_sets[k].size(); j++) {
-                auto uni = freq_item_sets[k][i] + freq_item_sets[k][j];
+        for (auto i = freq_item_sets[k].begin(); i != freq_item_sets[k].end(); i++) {
+            for (auto j = i; (advance(j, 1), j) != freq_item_sets[k].end();) {
+                auto uni = *i + *j;
                 if (uni.size() == k + 1) {
                     occurrence[uni]++;
                 }
@@ -91,31 +91,49 @@ vector<vector<ItemSet>> find_frequent_item_sets(vector<Item> items, const int mi
     return freq_item_sets;
 }
 
+void increment(vector<unsigned int> &bit_mask) {
+    for (auto &i : bit_mask) {
+        if (++i) return;
+    }
+}
+
+bool is_on(const vector<unsigned int> &bit_mask, size_t bit) {
+    return bit_mask[bit / (8 * sizeof(unsigned int))] &
+            (1 << (bit % (8 * sizeof(unsigned int))));
+}
+
 /**
  * Find association rules.
  * @param items Vector of items.
  * @param min_support Minimum support value.
- * @return Vector of association rule.
+ * @return Vector of association rules.
  */
 vector<AssociationRule> find_association_rules(const vector<Item> &items, const int min_support) {
     vector<AssociationRule> assc_rules;
 
     auto freq_item_sets = find_frequent_item_sets(items, min_support);
-    for (size_t i_sz = 1; i_sz < freq_item_sets.size(); i_sz++) {
-        for (auto &i : freq_item_sets[i_sz]) {
-            for (size_t j_sz = 1; i_sz + j_sz < freq_item_sets.size(); j_sz++) {
-                for (auto &j : freq_item_sets[j_sz]) {
-                    auto uni = i + j;
-                    if (uni.size() < i_sz + j_sz) {
-                        continue;
+
+    for (size_t sz = freq_item_sets.size() - 1; sz >= 2; sz--) {
+        for (auto i : freq_item_sets[sz]) {
+            vector<unsigned int> bit_mask((sz + 1) / (8 * sizeof(unsigned int)) + 1);
+
+            while (!is_on(bit_mask, sz)) {
+                auto it = i.items.begin();
+                ItemSet set_i({}), set_j({});
+                for (int j = 0; j < sz; j++) {
+                    if (is_on(bit_mask, j)) {
+                        set_i = set_i + ItemSet({*it});
+                    } else {
+                        set_j = set_j + ItemSet({*it});
                     }
-                    auto it = find(freq_item_sets[uni.size()].begin(),
-                                   freq_item_sets[uni.size()].end(),
-                                   uni);
-                    if (it != freq_item_sets[uni.size()].end()) {
-                        assc_rules.emplace_back(i, j, it->support(), (float) it->support() / i.support());
-                    }
+                    it++;
                 }
+                increment(bit_mask);
+                if (!set_i.size() || !set_j.size()) continue;
+
+                auto found_i = freq_item_sets[set_i.size()].find(set_i);
+                auto found_j = freq_item_sets[set_j.size()].find(set_j);
+                assc_rules.emplace_back(*found_i, *found_j, i.support(), (float) i.support() / found_i->support());
             }
         }
     }

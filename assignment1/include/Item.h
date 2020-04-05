@@ -32,7 +32,7 @@ public:
   ~ItemSet() = default;
 
   size_t size();
-  size_t support();
+  size_t support() const;
   ItemSet operator+(const ItemSet &o) const;
   bool operator==(const ItemSet &o) const;
   bool operator<(const ItemSet &o) const;

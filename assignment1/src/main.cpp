@@ -51,43 +51,38 @@ vector<ItemSet> find_frequent_item_sets(vector<Item> items, int min_support) {
 
     items.erase(remove_if(items.begin(),
                           items.end(),
-                          [min_support](auto &i) { return i.support < min_support; }),
+                          [min_support](auto &i) { return i.support() < min_support; }),
                 items.end());
 
     vector<ItemSet> freq_item_sets;
     vector<ItemSet> candidate_item_sets;
-    for (size_t i = 0; i < items.size(); i++) {
-        for (size_t j = 0; j < items.size(); j++) {
-            if (i == j) continue;
-            auto new_item_set = ItemSet({items[i], items[j]});
-            if (new_item_set.support() >= min_support) {
-                freq_item_sets.push_back(new_item_set);
-            }
+    for (size_t i = 0; i < items.size() - 1; i++) {
+        for (size_t j = i + 1; j < items.size(); j++) {
+            candidate_item_sets.push_back(ItemSet({items[i], items[j]}));
         }
     }
 
     for (int k = 2; ; k++) {
-        auto begin_prev_freq_item_sets = freq_item_sets.begin();
+        auto begin_prev_freq_item_sets = freq_item_sets.size();
         for (auto &candidate_item_set : candidate_item_sets) {
             if (candidate_item_set.support() >= min_support) {
                 freq_item_sets.push_back(candidate_item_set);
             }
         }
 
-        if (begin_prev_freq_item_sets == freq_item_sets.end()) break;
+        if (begin_prev_freq_item_sets == freq_item_sets.size()) break;
         candidate_item_sets.clear();
 
-        unordered_map<ItemSet, size_t> occurrence;
-        for (auto i = begin_prev_freq_item_sets; i != freq_item_sets.end(); i++) {
-            for (auto j = begin_prev_freq_item_sets; j != freq_item_sets.end(); j++) {
-                if (i == j) continue;
-                auto new_item_set = *i + *j;
+        map<ItemSet, size_t> occurrence;
+        for (auto i = begin_prev_freq_item_sets; i < freq_item_sets.size() - 1; i++) {
+            for (auto j = i + 1; j < freq_item_sets.size(); j++) {
+                auto new_item_set = freq_item_sets[i] + freq_item_sets[j];
                 if (new_item_set.size() == k + 1)
                     occurrence[new_item_set]++;
             }
         }
         for (auto &i : occurrence) {
-            if (i.second == k + 1)
+            if (i.second == k * (k + 1) / 2)
                 candidate_item_sets.push_back(i.first);
         }
     }
@@ -101,6 +96,7 @@ vector<ItemSet> find_frequent_item_sets(vector<Item> items, int min_support) {
  * @param min_support Minimum support value.
  * @return Vector of association rule.
  */
+ /*
 vector<AssociationRule> find_association_rules(const vector<Item> &items, const int min_support) {
     vector<AssociationRule> assc_rules;
 
@@ -112,6 +108,7 @@ vector<AssociationRule> find_association_rules(const vector<Item> &items, const 
 
     return assc_rules;
 }
+  */
 
 /**
  * Overloads operator<< to write association rules on file stream.
@@ -119,6 +116,7 @@ vector<AssociationRule> find_association_rules(const vector<Item> &items, const 
  * @param rules Vector of association rule.
  * @return `ofs`.
  */
+ /*
 ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     for (const auto &rule : rules) {
         ofs << "{" << rule.item_set.items.cbegin()->id;
@@ -139,6 +137,7 @@ ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     }
     return ofs;
 }
+  */
 
 /**
  * Solves assignment1, finding association rules of given transactions.
@@ -169,11 +168,17 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    size_t num_txn;
     auto items = read_items(ifs);
     int min_support = ceil(min_support_percent * num_txns / 100.);
-    auto assc_rules = find_association_rules(items, min_support);
-    ofs << assc_rules;
+    // auto assc_rules = find_association_rules(items, min_support);
+    // ofs << assc_rules;
+    auto t = find_frequent_item_sets(items, min_support);
+    for (auto i : t) {
+        for (auto j : i.items)
+            cout << j.id << " ";
+        cout << i.support();
+        cout << "\n";
+    }
 
     ifs.close();
     ofs.close();

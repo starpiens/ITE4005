@@ -34,6 +34,7 @@ vector<Item> read_items(ifstream &ifs) {
         num_txns++;
     }
     vector<Item> vec_item;
+    vec_item.reserve(map_item.size());
     for (auto &item : map_item) {
         vec_item.push_back(*item.second);
     }
@@ -56,13 +57,12 @@ vector<ItemSet> find_frequent_item_sets(vector<Item> items, int min_support) {
 
     vector<ItemSet> freq_item_sets;
     vector<ItemSet> candidate_item_sets;
-    for (size_t i = 0; i < items.size() - 1; i++) {
-        for (size_t j = i + 1; j < items.size(); j++) {
-            candidate_item_sets.push_back(ItemSet({items[i], items[j]}));
-        }
+    candidate_item_sets.reserve(items.size());
+    for (const auto &item : items) {
+        candidate_item_sets.push_back(ItemSet({item}));
     }
 
-    for (int k = 2; ; k++) {
+    for (int k = 1;; k++) {
         auto begin_prev_freq_item_sets = freq_item_sets.size();
         for (auto &candidate_item_set : candidate_item_sets) {
             if (candidate_item_set.support() >= min_support) {
@@ -96,19 +96,19 @@ vector<ItemSet> find_frequent_item_sets(vector<Item> items, int min_support) {
  * @param min_support Minimum support value.
  * @return Vector of association rule.
  */
- /*
+/*
 vector<AssociationRule> find_association_rules(const vector<Item> &items, const int min_support) {
-    vector<AssociationRule> assc_rules;
+   vector<AssociationRule> assc_rules;
 
-    auto freq_item_sets = find_frequent_item_sets(txns, min_support);
-    for (const auto &freq_item_set : freq_item_sets) {
+   auto freq_item_sets = find_frequent_item_sets(txns, min_support);
+   for (const auto &freq_item_set : freq_item_sets) {
 
-    }
-    // TODO
+   }
+   // TODO
 
-    return assc_rules;
+   return assc_rules;
 }
-  */
+ */
 
 /**
  * Overloads operator<< to write association rules on file stream.
@@ -116,28 +116,28 @@ vector<AssociationRule> find_association_rules(const vector<Item> &items, const 
  * @param rules Vector of association rule.
  * @return `ofs`.
  */
- /*
+/*
 ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
-    for (const auto &rule : rules) {
-        ofs << "{" << rule.item_set.items.cbegin()->id;
-        for (auto it = ++rule.item_set.items.cbegin(); it != rule.item_set.items.cend(); it++) {
-            ofs << "," << it->id;
-        }
-        ofs << "}\t";
-        ofs << "{" << rule.assc_item_set.items.cbegin()->id;
-        for (auto it = ++rule.assc_item_set.items.cbegin(); it != rule.assc_item_set.items.cend(); it++) {
-            ofs << "," << it->id;
-        }
-        ofs << "}\t";
-        auto ori_precision = ofs.precision();
-        ofs.precision(2);
-        ofs << rule.num_support / num_txns << "\t";
-        ofs << rule.num_confidence << "\n";
-        ofs.precision(ori_precision);
-    }
-    return ofs;
+   for (const auto &rule : rules) {
+       ofs << "{" << rule.item_set.items.cbegin()->id;
+       for (auto it = ++rule.item_set.items.cbegin(); it != rule.item_set.items.cend(); it++) {
+           ofs << "," << it->id;
+       }
+       ofs << "}\t";
+       ofs << "{" << rule.assc_item_set.items.cbegin()->id;
+       for (auto it = ++rule.assc_item_set.items.cbegin(); it != rule.assc_item_set.items.cend(); it++) {
+           ofs << "," << it->id;
+       }
+       ofs << "}\t";
+       auto ori_precision = ofs.precision();
+       ofs.precision(2);
+       ofs << rule.num_support / num_txns << "\t";
+       ofs << rule.num_confidence << "\n";
+       ofs.precision(ori_precision);
+   }
+   return ofs;
 }
-  */
+ */
 
 /**
  * Solves assignment1, finding association rules of given transactions.

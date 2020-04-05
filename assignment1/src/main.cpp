@@ -48,7 +48,7 @@ vector<Item> read_items(ifstream &ifs) {
  * @param min_support Minimum support count.
  * @return Vector of frequent item sets.
  */
-vector<ItemSet> find_frequent_item_sets(vector<Item> items, int min_support) {
+vector<ItemSet> find_frequent_item_sets(vector<Item> items, const int min_support) {
 
     items.erase(remove_if(items.begin(),
                           items.end(),
@@ -96,48 +96,50 @@ vector<ItemSet> find_frequent_item_sets(vector<Item> items, int min_support) {
  * @param min_support Minimum support value.
  * @return Vector of association rule.
  */
-/*
 vector<AssociationRule> find_association_rules(const vector<Item> &items, const int min_support) {
-   vector<AssociationRule> assc_rules;
+    vector<AssociationRule> assc_rules;
 
-   auto freq_item_sets = find_frequent_item_sets(txns, min_support);
-   for (const auto &freq_item_set : freq_item_sets) {
+    auto freq_item_sets = find_frequent_item_sets(items, min_support);
+    for (auto i : freq_item_sets) {
+        for (auto j : freq_item_sets) {
+            auto uni = i + j;
+            if (uni.size() < i.size() + j.size()) continue;
+            auto it = find(freq_item_sets.begin(), freq_item_sets.end(), uni);
+            if (it != freq_item_sets.end()) {
+                assc_rules.emplace_back(i, j, uni.support(), (float) uni.support() / i.support());
+            }
+        }
+    }
 
-   }
-   // TODO
-
-   return assc_rules;
+    return assc_rules;
 }
- */
 
 /**
  * Overloads operator<< to write association rules on file stream.
  * @param ofs Output file stream.
- * @param rules Vector of association rule.
+ * @param rules Vector of association rules.
  * @return `ofs`.
  */
-/*
 ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
-   for (const auto &rule : rules) {
-       ofs << "{" << rule.item_set.items.cbegin()->id;
-       for (auto it = ++rule.item_set.items.cbegin(); it != rule.item_set.items.cend(); it++) {
-           ofs << "," << it->id;
-       }
-       ofs << "}\t";
-       ofs << "{" << rule.assc_item_set.items.cbegin()->id;
-       for (auto it = ++rule.assc_item_set.items.cbegin(); it != rule.assc_item_set.items.cend(); it++) {
-           ofs << "," << it->id;
-       }
-       ofs << "}\t";
-       auto ori_precision = ofs.precision();
-       ofs.precision(2);
-       ofs << rule.num_support / num_txns << "\t";
-       ofs << rule.num_confidence << "\n";
-       ofs.precision(ori_precision);
-   }
-   return ofs;
+    for (const auto &rule : rules) {
+        ofs << "{" << rule.item_set.items.cbegin()->id;
+        for (auto it = ++rule.item_set.items.cbegin(); it != rule.item_set.items.cend(); it++) {
+            ofs << "," << it->id;
+        }
+        ofs << "}\t";
+        ofs << "{" << rule.assc_item_set.items.cbegin()->id;
+        for (auto it = ++rule.assc_item_set.items.cbegin(); it != rule.assc_item_set.items.cend(); it++) {
+            ofs << "," << it->id;
+        }
+        ofs << "}\t";
+        auto ori_precision = ofs.precision();
+        ofs.precision(2);
+        ofs << 100. * rule.support / num_txns << "\t";
+        ofs << 100. * rule.confidence << "\n";
+        ofs.precision(ori_precision);
+    }
+    return ofs;
 }
- */
 
 /**
  * Solves assignment1, finding association rules of given transactions.
@@ -170,15 +172,8 @@ int main(int argc, char *argv[]) {
 
     auto items = read_items(ifs);
     int min_support = ceil(min_support_percent * num_txns / 100.);
-    // auto assc_rules = find_association_rules(items, min_support);
-    // ofs << assc_rules;
-    auto t = find_frequent_item_sets(items, min_support);
-    for (auto i : t) {
-        for (auto j : i.items)
-            cout << j.id << " ";
-        cout << i.support();
-        cout << "\n";
-    }
+    auto assc_rules = find_association_rules(items, min_support);
+    ofs << assc_rules;
 
     ifs.close();
     ofs.close();

@@ -23,24 +23,14 @@ size_t ItemSet::size() {
 
 size_t ItemSet::support() {
     auto intersection = items.begin()->txns;
+
     for (auto it = ++items.begin(); it != items.end(); it++) {
-        for (auto it2 = intersection.begin(); it2 != intersection.end(); ) {
-            if (it->txns.find(*it2) == it->txns.end())
-                it2 = intersection.erase(it2);
-            else it2++;
-        }
-
-        /*
-        intersection.erase(std::remove_if(intersection.begin(),
-                                          intersection.end(),
-                                          [it](txn_id_t i) {
-                                            return it->txns.find(i) == it->txns.end();
-                                          }),
-                           intersection.end());
-                           */
+        decltype(intersection) tmp;
+        std::set_intersection(intersection.begin(), intersection.end(),
+                              it->txns.begin(), it->txns.end(),
+                              std::inserter(tmp, tmp.begin()));
+        intersection = tmp;
     }
-
-    // TODO: Faster computation
 
     return intersection.size();
 }

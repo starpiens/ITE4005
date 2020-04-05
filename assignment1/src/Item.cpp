@@ -33,6 +33,8 @@ size_t ItemSet::support() {
     return intersection.size();
 }
 
-bool ItemSet::operator+(Item &o) {
-    return false;
+ItemSet ItemSet::operator+(ItemSet &o) {
+    ItemSet result(o);
+    result.items.insert(items.begin(), items.end());
+    return result;
 }

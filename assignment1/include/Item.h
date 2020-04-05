@@ -32,7 +32,7 @@ public:
 
   size_t size();
   size_t support();
-  bool operator+(Item &o);
+  ItemSet operator+(ItemSet &o);
 
   std::set<Item> items;
 };

@@ -30,7 +30,9 @@ public:
   ItemSet(std::set<Item> items) : items(std::move(items)) {}
   ~ItemSet() = default;
 
+  size_t size();
   size_t support();
+  bool operator+(Item &o);
 
   std::set<Item> items;
 };

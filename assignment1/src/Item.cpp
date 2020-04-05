@@ -1,6 +1,19 @@
 #include "Item.h"
 
-ItemSet::ItemSet(set<item_id_t> vec_item_id, set<txn_id_t> vec_txn_id) {
-    item_id = std::move(vec_item_id);
-    txn_id = std::move(vec_txn_id);
+size_t Item::support() {
+    return txns.size();
+}
+
+void Item::add_transaction(txn_id_t txn_id) {
+    txns.insert(txn_id);
+}
+
+bool Item::operator<(Item &o) {
+    return id < o.id;
+}
+
+size_t ItemSet::support() {
+    // TODO
+
+    return 0;
 }

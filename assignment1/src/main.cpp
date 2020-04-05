@@ -5,56 +5,47 @@
 #include <iostream>
 #include <unordered_set>
 #include <unordered_map>
+#include <map>
 
-#include "globals.h"
 #include "Item.h"
 #include "AssociationRule.h"
-#include "Transaction.h"
 
 using namespace std;
 
 /**
- * Read transactions from `ifs`.
+ * Read transactions from input file stream.
+ *
  * @param ifs Input file stream.
- * @return Vector of transaction.
+ * @return Vector of items.
  */
-vector<Transaction> read_transactions(ifstream &ifs) {
-    vector<Transaction> vec_txn;
+vector<Item> read_items(ifstream &ifs) {
+    unordered_map<item_id_t, Item *> map_item;
     string txn_str;
-    int txn_id = 0;
+    num_txns = 0;
     while (getline(ifs, txn_str)) {
         istringstream iss(txn_str);
-        set<item_id_t> set_item_id;
         item_id_t item_id;
         while (iss >> item_id) {
-            set_item_id.insert(item_id);
+            if (!map_item[item_id]) {
+                map_item[item_id] = new Item(item_id);
+            }
+            map_item[item_id]->add_transaction(num_txns);
         }
-        vec_txn.emplace_back(txn_id++, set_item_id);
+        num_txns++;
     }
-    return vec_txn;
-}
-
-vector<ItemSet> transactions_to_itemsets(const vector<txn_t> &txns) {
-    unordered_map<item_id_t, set<size_t>> um;
-    for (txn_id_t txn_id = 0; txn_id < txns.size(); txn_id++) {
-        for (auto item_id : txns[txn_id]) {
-            um[item_id].insert(txn_id);
-        }
+    vector<Item> vec_item;
+    for (auto &item : map_item) {
+        vec_item.push_back(*item.second);
     }
-
-    vector<ItemSet> item_sets;
-    for (const auto &i : um) {
-        ItemSet new_itemset({i.first}, i.second);
-        item_sets.push_back(new_itemset);
-    }
-    return item_sets;
+    return vec_item;
 }
 
 /**
  * Find frequent item sets using Apriori algorithm.
- * @param txns Vector of transaction.
- * @param min_support Minimum support value in percentage.
- * @return Vector of frequent item set.
+ *
+ * @param txns Vector of transactions.
+ * @param min_support Minimum support count.
+ * @return Vector of frequent item sets.
  */
 vector<ItemSet> find_frequent_item_sets(const vector<txn_t> &txns, const int min_support) {
     vector<ItemSet> freq_item_sets;
@@ -74,11 +65,11 @@ vector<ItemSet> find_frequent_item_sets(const vector<txn_t> &txns, const int min
 
 /**
  * Find association rules.
- * @param txns Vector of transactions.
- * @param min_support Minimum support value in percentage.
+ * @param items Vector of items.
+ * @param min_support Minimum support value.
  * @return Vector of association rule.
  */
-vector<AssociationRule> find_association_rules(const vector<Transaction> &txns, const int min_support) {
+vector<AssociationRule> find_association_rules(const vector<Item> &items, const int min_support) {
     vector<AssociationRule> assc_rules;
 
     auto freq_item_sets = find_frequent_item_sets(txns, min_support);
@@ -98,20 +89,20 @@ vector<AssociationRule> find_association_rules(const vector<Transaction> &txns, 
  */
 ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     for (const auto &rule : rules) {
-        ofs << "{" << *rule.item_set.item_id.begin();
-        for (auto it = ++rule.item_set.item_id.cbegin(); it != rule.item_set.item_id.cend(); it++) {
-            ofs << *it;
+        ofs << "{" << rule.item_set.items.cbegin()->id;
+        for (auto it = ++rule.item_set.items.cbegin(); it != rule.item_set.items.cend(); it++) {
+            ofs << "," << it->id;
         }
         ofs << "}\t";
-        ofs << "{" << *rule.associative_item_set.item_id.begin();
-        for (auto it = ++rule.associative_item_set.item_id.cbegin(); it != rule.associative_item_set.item_id.cend(); it++) {
-            ofs << "," << *it;
+        ofs << "{" << rule.assc_item_set.items.cbegin()->id;
+        for (auto it = ++rule.assc_item_set.items.cbegin(); it != rule.assc_item_set.items.cend(); it++) {
+            ofs << "," << it->id;
         }
         ofs << "}\t";
         auto ori_precision = ofs.precision();
         ofs.precision(2);
-        ofs << rule.support << "\t";
-        ofs << rule.confidence << "\n";
+        ofs << rule.num_support / num_txns << "\t";
+        ofs << rule.num_confidence << "\n";
         ofs.precision(ori_precision);
     }
     return ofs;
@@ -146,9 +137,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    auto txns = read_transactions(ifs);
-    int min_support = ceil(min_support_percent * txns.size() / 100.);
-    auto assc_rules = find_association_rules(txns, min_support);
+    size_t num_txn;
+    auto items = read_items(ifs);
+    int min_support = ceil(min_support_percent * num_txns / 100.);
+    auto assc_rules = find_association_rules(items, min_support);
     ofs << assc_rules;
 
     ifs.close();

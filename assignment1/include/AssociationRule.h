@@ -7,12 +7,12 @@
 
 class AssociationRule {
 public:
-  AssociationRule() = default;
+  AssociationRule(ItemSet item_set, ItemSet assc_item_set);
   ~AssociationRule() = default;
 
-private:
   ItemSet item_set;
   ItemSet assc_item_set;
+
   size_t num_support;
   size_t num_confidence;
 };

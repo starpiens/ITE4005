@@ -46,16 +46,16 @@ vector<Item> read_items(ifstream &ifs) {
  *
  * @param txns Vector of transactions.
  * @param min_support Minimum support count.
- * @return Vector of frequent item sets.
+ * @return Vector of vector of frequent item sets.
  */
-vector<ItemSet> find_frequent_item_sets(vector<Item> items, const int min_support) {
+vector<vector<ItemSet>> find_frequent_item_sets(vector<Item> items, const int min_support) {
 
     items.erase(remove_if(items.begin(),
                           items.end(),
                           [min_support](auto &i) { return i.support() < min_support; }),
                 items.end());
 
-    vector<ItemSet> freq_item_sets;
+    vector<vector<ItemSet>> freq_item_sets(1);
     vector<ItemSet> candidate_item_sets;
     candidate_item_sets.reserve(items.size());
     for (const auto &item : items) {
@@ -63,22 +63,23 @@ vector<ItemSet> find_frequent_item_sets(vector<Item> items, const int min_suppor
     }
 
     for (int k = 1;; k++) {
-        auto begin_prev_freq_item_sets = freq_item_sets.size();
+        freq_item_sets.emplace_back();
         for (auto &candidate_item_set : candidate_item_sets) {
             if (candidate_item_set.support() >= min_support) {
-                freq_item_sets.push_back(candidate_item_set);
+                freq_item_sets[k].push_back(candidate_item_set);
             }
         }
 
-        if (begin_prev_freq_item_sets == freq_item_sets.size()) break;
+        if (freq_item_sets[k].empty()) break;
         candidate_item_sets.clear();
 
         map<ItemSet, size_t> occurrence;
-        for (auto i = begin_prev_freq_item_sets; i < freq_item_sets.size() - 1; i++) {
-            for (auto j = i + 1; j < freq_item_sets.size(); j++) {
-                auto new_item_set = freq_item_sets[i] + freq_item_sets[j];
-                if (new_item_set.size() == k + 1)
-                    occurrence[new_item_set]++;
+        for (size_t i = 0; i < freq_item_sets[k].size() - 1; i++) {
+            for (size_t j = i + 1; j < freq_item_sets[k].size(); j++) {
+                auto uni = freq_item_sets[k][i] + freq_item_sets[k][j];
+                if (uni.size() == k + 1) {
+                    occurrence[uni]++;
+                }
             }
         }
         for (auto &i : occurrence) {
@@ -100,13 +101,21 @@ vector<AssociationRule> find_association_rules(const vector<Item> &items, const 
     vector<AssociationRule> assc_rules;
 
     auto freq_item_sets = find_frequent_item_sets(items, min_support);
-    for (auto i : freq_item_sets) {
-        for (auto j : freq_item_sets) {
-            auto uni = i + j;
-            if (uni.size() < i.size() + j.size()) continue;
-            auto it = find(freq_item_sets.begin(), freq_item_sets.end(), uni);
-            if (it != freq_item_sets.end()) {
-                assc_rules.emplace_back(i, j, uni.support(), (float) uni.support() / i.support());
+    for (size_t i_sz = 1; i_sz < freq_item_sets.size(); i_sz++) {
+        for (auto &i : freq_item_sets[i_sz]) {
+            for (size_t j_sz = 1; i_sz + j_sz < freq_item_sets.size(); j_sz++) {
+                for (auto &j : freq_item_sets[j_sz]) {
+                    auto uni = i + j;
+                    if (uni.size() < i_sz + j_sz) {
+                        continue;
+                    }
+                    auto it = find(freq_item_sets[uni.size()].begin(),
+                                   freq_item_sets[uni.size()].end(),
+                                   uni);
+                    if (it != freq_item_sets[uni.size()].end()) {
+                        assc_rules.emplace_back(i, j, it->support(), (float) it->support() / i.support());
+                    }
+                }
             }
         }
     }
@@ -172,10 +181,18 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    cout << "Running.." << endl;
+    auto time_start = chrono::steady_clock::now();
+
     auto items = read_items(ifs);
     int min_support = ceil(min_support_percent * num_txns / 100.);
     auto assc_rules = find_association_rules(items, min_support);
     ofs << assc_rules;
+
+    auto time_end = chrono::steady_clock::now();
+    cout << "Done.\nTotal Time elapsed: "
+         << chrono::duration_cast<chrono::milliseconds>(time_end - time_start).count()
+         << "ms";
 
     ifs.close();
     ofs.close();

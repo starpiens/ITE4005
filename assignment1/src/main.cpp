@@ -47,18 +47,50 @@ vector<Item> read_items(ifstream &ifs) {
  * @param min_support Minimum support count.
  * @return Vector of frequent item sets.
  */
-vector<ItemSet> find_frequent_item_sets(const vector<txn_t> &txns, const int min_support) {
-    vector<ItemSet> freq_item_sets;
+vector<ItemSet> find_frequent_item_sets(vector<Item> items, int min_support) {
 
-    auto candidate_sets = transactions_to_itemsets(txns);
-    unordered_set<item_id_t> freq_item_set;
-    for (const auto &item : item_cnt) {
-        if (item.second >= min_support) {
-            freq_item_set.insert(item.first);
+    items.erase(remove_if(items.begin(),
+                          items.end(),
+                          [min_support](auto &i) { return i.support < min_support; }),
+                items.end());
+
+    vector<ItemSet> freq_item_sets;
+    vector<ItemSet> candidate_item_sets;
+    for (size_t i = 0; i < items.size(); i++) {
+        for (size_t j = 0; j < items.size(); j++) {
+            if (i == j) continue;
+            auto new_item_set = ItemSet({items[i], items[j]});
+            if (new_item_set.support() >= min_support) {
+                freq_item_sets.push_back(new_item_set);
+            }
         }
     }
 
-    // TODO
+    for (int k = 2; ; k++) {
+        auto begin_prev_freq_item_sets = freq_item_sets.begin();
+        for (auto &candidate_item_set : candidate_item_sets) {
+            if (candidate_item_set.support() >= min_support) {
+                freq_item_sets.push_back(candidate_item_set);
+            }
+        }
+
+        if (begin_prev_freq_item_sets == freq_item_sets.end()) break;
+        candidate_item_sets.clear();
+
+        unordered_map<ItemSet, size_t> occurrence;
+        for (auto i = begin_prev_freq_item_sets; i != freq_item_sets.end(); i++) {
+            for (auto j = begin_prev_freq_item_sets; j != freq_item_sets.end(); j++) {
+                if (i == j) continue;
+                auto new_item_set = *i + *j;
+                if (new_item_set.size() == k + 1)
+                    occurrence[new_item_set]++;
+            }
+        }
+        for (auto &i : occurrence) {
+            if (i.second == k + 1)
+                candidate_item_sets.push_back(i.first);
+        }
+    }
 
     return freq_item_sets;
 }

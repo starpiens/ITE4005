@@ -18,7 +18,7 @@ using namespace std;
  * @param ifs Input file stream.
  * @return Vector of items.
  */
-vector<Item> read_items(ifstream &ifs) {
+vector<Item *> read_items(ifstream &ifs) {
     unordered_map<item_id_t, Item *> map_item;
     string txn_str;
     num_txns = 0;
@@ -33,12 +33,12 @@ vector<Item> read_items(ifstream &ifs) {
         }
         num_txns++;
     }
-    vector<Item> vec_item;
-    vec_item.reserve(map_item.size());
+    vector<Item *> vec_items;
+    vec_items.reserve(map_item.size());
     for (auto &item : map_item) {
-        vec_item.push_back(*item.second);
+        vec_items.push_back(item.second);
     }
-    return vec_item;
+    return vec_items;
 }
 
 /**
@@ -46,60 +46,55 @@ vector<Item> read_items(ifstream &ifs) {
  *
  * @param txns Vector of transactions.
  * @param min_support Minimum support count.
- * @return Vector of vector of frequent item sets.
+ * @return Vector of pointer of frequent item sets.
  */
-vector<set<ItemSet>> find_frequent_item_sets(vector<Item> items, const int min_support) {
+// TODO: find only max patterns
+vector<const ItemSet *> find_frequent_patterns(vector<Item *> items, const int min_support) {
 
-    items.erase(remove_if(items.begin(),
-                          items.end(),
-                          [min_support](auto &i) { return i.support() < min_support; }),
-                items.end());
+    auto freq_end = remove_if(items.begin(),
+                              items.end(),
+                              [min_support](auto &i) { return i->support() < min_support; });
 
-    vector<set<ItemSet>> freq_item_sets(1);
-    vector<ItemSet> candidate_item_sets;
-    candidate_item_sets.reserve(items.size());
-    for (const auto &item : items) {
-        candidate_item_sets.push_back(ItemSet({item}));
+    vector<const ItemSet *> freq_item_sets;
+    map<vector<item_id_t>, ItemSet *> candidate_item_sets;
+    for (auto it = items.begin(); it != freq_end; it++) {
+        freq_item_sets.push_back(*it);
     }
 
-    for (int k = 1;; k++) {
-        freq_item_sets.emplace_back();
-        for (auto &candidate_item_set : candidate_item_sets) {
-            if (candidate_item_set.support() >= min_support) {
-                freq_item_sets[k].insert(candidate_item_set);
-            }
-        }
-
-        if (freq_item_sets[k].empty()) break;
-        candidate_item_sets.clear();
-
-        map<ItemSet, size_t> occurrence;
-        for (auto i = freq_item_sets[k].begin(); i != freq_item_sets[k].end(); i++) {
-            for (auto j = i; (advance(j, 1), j) != freq_item_sets[k].end();) {
-                auto uni = *i + *j;
-                if (uni.size() == k + 1) {
-                    occurrence[uni]++;
+    int cnt = 0;
+    size_t prev_begin = 0;
+    for (int k = 2; prev_begin != freq_item_sets.size(); k++) {
+        // Generate
+        for (auto i = prev_begin; i != freq_item_sets.size(); i++) {
+            for (auto j = i + 1; j != freq_item_sets.size(); j++) {
+                auto uni = Item::get_union(freq_item_sets[i], freq_item_sets[j]);
+                if (uni->size() == k) {
+                    cnt++;
+                    auto &tmp = candidate_item_sets[uni->items];
+                    if (tmp == nullptr) {
+                        tmp = uni;
+                    } else {
+                        tmp->add_child(freq_item_sets[i]);
+                        tmp->add_child(freq_item_sets[j]);
+                    }
+                } else {
+                    delete uni;
                 }
             }
         }
-        for (auto &i : occurrence) {
-            if (i.second == k * (k + 1) / 2)
-                candidate_item_sets.push_back(i.first);
+        // Test
+        prev_begin = freq_item_sets.size();
+        for (auto &i : candidate_item_sets) {
+            if (i.second->num_children() == k && i.second->support() >= min_support) {
+                freq_item_sets.push_back(i.second);
+            } else {
+                delete i.second;
+            }
         }
+        candidate_item_sets.clear();
     }
 
     return freq_item_sets;
-}
-
-void increment(vector<unsigned int> &bit_mask) {
-    for (auto &i : bit_mask) {
-        if (++i) return;
-    }
-}
-
-bool is_on(const vector<unsigned int> &bit_mask, size_t bit) {
-    return bit_mask[bit / (8 * sizeof(unsigned int))] &
-            (1 << (bit % (8 * sizeof(unsigned int))));
 }
 
 /**
@@ -108,10 +103,14 @@ bool is_on(const vector<unsigned int> &bit_mask, size_t bit) {
  * @param min_support Minimum support value.
  * @return Vector of association rules.
  */
+ /*
 vector<AssociationRule> find_association_rules(const vector<Item> &items, const int min_support) {
     vector<AssociationRule> assc_rules;
 
-    auto freq_item_sets = find_frequent_item_sets(items, min_support);
+    auto time_start = chrono::steady_clock::now();
+    auto freq_item_sets = find_frequent_patterns(items, min_support);
+    auto time_end = chrono::steady_clock::now();
+    cout << chrono::duration_cast<chrono::milliseconds>(time_end - time_start).count() << endl;
 
     for (size_t sz = freq_item_sets.size() - 1; sz >= 2; sz--) {
         for (auto i : freq_item_sets[sz]) {
@@ -140,6 +139,7 @@ vector<AssociationRule> find_association_rules(const vector<Item> &items, const 
 
     return assc_rules;
 }
+  */
 
 /**
  * Overloads operator<< to write association rules on file stream.
@@ -147,6 +147,7 @@ vector<AssociationRule> find_association_rules(const vector<Item> &items, const 
  * @param rules Vector of association rules.
  * @return `ofs`.
  */
+ /*
 ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     for (const auto &rule : rules) {
         ofs << "{" << rule.item_set.items.cbegin()->id;
@@ -169,6 +170,7 @@ ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
     }
     return ofs;
 }
+  */
 
 /**
  * Solves assignment1, finding association rules of given transactions.
@@ -204,8 +206,17 @@ int main(int argc, char *argv[]) {
 
     auto items = read_items(ifs);
     int min_support = ceil(min_support_percent * num_txns / 100.);
+    auto fp = find_frequent_patterns(items, min_support);
+    cout << fp.size() << endl;
+    for (auto i : fp) {
+        for (auto j : i->items)
+            cout << j << " ";
+        cout << endl;
+    }
+    /*
     auto assc_rules = find_association_rules(items, min_support);
     ofs << assc_rules;
+     */
 
     auto time_end = chrono::steady_clock::now();
     cout << "Done.\nTotal Time elapsed: "

@@ -3,7 +3,7 @@ INC_DIR = ./include
 SRC_DIR = ./src
 
 CC = g++
-CFLAGS = -std=c++14 -g -Wall
+CFLAGS = -std=c++14 -g -Wall -O3
 
 INCLUDES = -I$(INC_DIR)
 LIBS = -lpthread -lm

@@ -26,10 +26,10 @@ public:
   virtual std::set<ItemSet *> get_descendants();
 
   bool operator==(const ItemSet &o) const;
-
   bool operator<(const ItemSet &o) const;
 
   std::vector<item_id_t> items;     // IDs of items, ascending order.
+
 protected:
   ItemSet() = default;
 

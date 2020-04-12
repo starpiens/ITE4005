@@ -13,10 +13,10 @@
 using namespace std;
 
 /**
- * Read transactions from input file stream.
+ * Read items from input file stream.
  *
  * @param ifs Input file stream.
- * @return Vector of items.
+ * @return Vector of pointers to items.
  */
 vector<Item *> read_items(ifstream &ifs) {
     unordered_map<item_id_t, Item *> map_item;
@@ -44,9 +44,9 @@ vector<Item *> read_items(ifstream &ifs) {
 /**
  * Find frequent item sets using Apriori algorithm.
  *
- * @param txns Vector of transactions.
+ * @param items Vector of pointer to items.
  * @param min_support Minimum support count.
- * @return Vector of pointer of frequent item sets.
+ * @return Vector of pointers to frequent itemsets.
  */
 // TODO: find only max patterns
 vector<ItemSet *> find_frequent_patterns(vector<Item *> &items, const int min_support) {
@@ -98,10 +98,10 @@ vector<ItemSet *> find_frequent_patterns(vector<Item *> &items, const int min_su
 }
 
 /**
-
  * Overloads operator<< to write association rules on file stream.
+ *
  * @param ofs Output file stream.
- * @param rules Vector of association rules.
+ * @param rule Association rule.
  * @return `ofs`.
  */
 ofstream &operator<<(ofstream &ofs, const AssociationRule &rule) {
@@ -126,10 +126,11 @@ ofstream &operator<<(ofstream &ofs, const AssociationRule &rule) {
 }
 
 /**
- * Find association rules.
- * @param items Vector of items.
- * @param min_support Minimum support value.
- * @return Vector of association rules.
+ * Find association rules and write to file.
+ *
+ * @param ofs Output file stream.
+ * @param items Vector of pointers to item.
+ * @param min_support Minimum support count.
  */
 void find_association_rules(ofstream &ofs, vector<Item *> &items, const int min_support) {
     auto freq_patterns = find_frequent_patterns(items, min_support);

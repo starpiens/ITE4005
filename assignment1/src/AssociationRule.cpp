@@ -1,6 +1,8 @@
 #include "AssociationRule.h"
 
-AssociationRule::AssociationRule(ItemSet item_set, ItemSet assc_item_set, size_t num_support, float confidence) :
-        item_set(item_set), assc_item_set(assc_item_set), support(num_support), confidence(confidence) {
-    ;
+AssociationRule::AssociationRule(ItemSet *itemset, ItemSet *assc_itemset, size_t num_support, float confidence) {
+    itemset = itemset;
+    assc_itemset = assc_itemset;
+    num_support = num_support;
+    confidence = confidence;
 }

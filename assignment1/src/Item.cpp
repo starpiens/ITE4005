@@ -20,7 +20,7 @@ size_t ItemSet::num_children() const {
     return children.size();
 }
 
-ItemSet *ItemSet::get_union(const ItemSet *l, const ItemSet *r) {
+ItemSet *ItemSet::get_union(ItemSet *l, ItemSet *r) {
     auto result = new ItemSet;
     std::set_union(l->items.begin(), l->items.end(),
                    r->items.begin(), r->items.end(),
@@ -39,12 +39,19 @@ bool ItemSet::operator<(const ItemSet &o) const {
     return items < o.items;
 }
 
-std::set<ItemSet *> ItemSet::get_children() {
-    return std::set<ItemSet *>();
+void ItemSet::add_child(ItemSet *itemset) {
+    children.insert(itemset);
 }
 
-void ItemSet::add_child(const ItemSet *itemset) {
-    children.insert(itemset);
+std::set<ItemSet *> ItemSet::get_descendants() {
+    if (descendants.empty()) {
+        for (auto &child : children) {
+            auto child_descendants = child->get_descendants();
+            descendants.insert(child_descendants.begin(), child_descendants.end());
+            descendants.insert(child);
+        }
+    }
+    return descendants;
 }
 
 
@@ -55,4 +62,8 @@ Item::Item(item_id_t item_id) {
 void Item::add_transaction(txn_id_t txn_id) {
     txns.push_back(txn_id);
     txns_updated = true;
+}
+
+std::set<ItemSet *> Item::get_descendants() {
+    return {};
 }

@@ -1,10 +1,13 @@
 #ifndef ASSIGNMENT1_ITEM_H
 #define ASSIGNMENT1_ITEM_H
 
+class AssociationRule;
+
 #include <utility>
 #include <vector>
 #include <set>
 #include <unordered_map>
+#include <algorithm>
 
 
 using item_id_t = size_t;
@@ -19,22 +22,24 @@ public:
   size_t num_children() const;
   size_t support();
 
-  void add_child(const ItemSet *itemset);
-  std::set<ItemSet *> get_children();
-  static ItemSet *get_union(const ItemSet *l, const ItemSet *r);
+  void add_child(ItemSet *itemset);
+  static ItemSet *get_union(ItemSet *l, ItemSet *r);
+  virtual std::set<ItemSet *> get_descendants();
 
   bool operator==(const ItemSet &o) const;
+
   bool operator<(const ItemSet &o) const;
 
-  std::vector<item_id_t> items;     // IDs of items, in ascending order.
-
+  std::vector<item_id_t> items;     // IDs of items, ascending order.
 protected:
   ItemSet() = default;
+
   bool txns_updated = false;        // Lazily update transactions.
-  std::vector<txn_id_t> txns;       // IDs of transactions, in ascending order.
+  std::vector<txn_id_t> txns;       // IDs of transactions, ascending order.
 
 private:
-  std::set<const ItemSet *> children;
+  std::set<ItemSet *> children;
+  std::set<ItemSet *> descendants;
 };
 
 
@@ -44,6 +49,7 @@ public:
   ~Item() = default;
 
   void add_transaction(txn_id_t txn_id);
+  std::set<ItemSet *> get_descendants() override;
 };
 
 

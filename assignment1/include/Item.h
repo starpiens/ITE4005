@@ -1,14 +1,13 @@
 #ifndef ASSIGNMENT1_ITEM_H
 #define ASSIGNMENT1_ITEM_H
 
-class AssociationRule;
-
 #include <utility>
 #include <vector>
 #include <set>
 #include <unordered_map>
 #include <algorithm>
 
+struct AssociationRule;
 
 using item_id_t = size_t;
 using txn_id_t = size_t;
@@ -16,7 +15,7 @@ using txn_id_t = size_t;
 
 class ItemSet {
 public:
-  ~ItemSet() = default;
+  virtual ~ItemSet() = default;
 
   size_t size() const;
   size_t num_children() const;
@@ -46,7 +45,7 @@ private:
 class Item : public ItemSet {
 public:
   explicit Item(item_id_t item_id);
-  ~Item() = default;
+  ~Item() override = default;
 
   void add_transaction(txn_id_t txn_id);
   std::set<ItemSet *> get_descendants() override;

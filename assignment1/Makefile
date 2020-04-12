@@ -1,29 +1,26 @@
 BIN_DIR = ./bin
 INC_DIR = ./include
 SRC_DIR = ./src
+TARGET = apriori
 
 CC = g++
-CFLAGS = -std=c++14
+CXXFLAGS = -std=c++14 -O3 -Wall
 
 INCLUDES = -I$(INC_DIR)
-LIBS = -lpthread -lm
+LIBS =
 
 INCS := $(wildcard $(INC_DIR)/*.h)
 SRCS := $(wildcard $(SRC_DIR)/*.cpp)
-OBJS := $(SRCS:.c=.o)
+OBJS := $(SRCS:.cpp=.o)
 
-apriori: $(OBJS)
-	$(CC) $(CFLAGS) -o $(BIN_DIR)/apriori $(OBJS) $(INCLUDES) $(LIBS) -O3
+$(info $(SRCS))
+$(info $(OBJS))
 
-apriori_debug: $(OBJS)
-	$(CC) $(CFLAGS) -o $(BIN_DIR)/apriori $(OBJS) $(INCLUDES) $(LIBS) -g -Wall -O0
+$(TARGET): $(OBJS)
+	$(CC) $(CXXFLAGS) -o $(BIN_DIR)/$@ $^ $(INCLUDES) $(LIBS)
 
-# this is a suffix replacement rule for building .o's from .c's
-# it uses automatic variables $<: the name of the prerequisite of
-# the rule(a .c file) and $@: the name of the target of the rule (a .o file)
-# (see the gnu make manual section about automatic variables)
-.c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+%.o: %.cpp
+	$(CC) $(CXXFLAGS) -c -o $@ $< $(INCLUDES) $(LIBS) -O3
 
 clean:
-	$(RM) $(BIN)$(TARGET) $(OBJS)
+	$(RM) $(BIN_DIR)/$(TARGET) $(OBJS)

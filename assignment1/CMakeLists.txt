@@ -9,5 +9,4 @@ include_directories(include)
 add_executable(apriori
         src/main.cpp
         src/Item.cpp
-        src/AssociationRule.cpp
-        src/Transaction.cpp)
+        src/AssociationRule.cpp)

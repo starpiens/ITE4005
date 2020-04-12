@@ -110,8 +110,12 @@ ofstream &operator<<(ofstream &ofs, const AssociationRule &rule) {
         ofs << "," << *it;
     }
     ofs << "}\t";
-    ofs << "{" << *rule.assc_itemset->items.cbegin();
-    for (auto it = ++rule.assc_itemset->items.cbegin(); it != rule.assc_itemset->items.cend(); it++) {
+    vector<item_id_t> assc_items;
+    set_difference(rule.assc_itemset->items.cbegin(), rule.assc_itemset->items.cend(),
+                   rule.itemset->items.cbegin(), rule.itemset->items.cend(),
+                   back_inserter(assc_items));
+    ofs << "{" << *assc_items.cbegin();
+    for (auto it = ++assc_items.cbegin(); it != assc_items.cend(); it++) {
         ofs << "," << *it;
     }
     ofs << "}\t";

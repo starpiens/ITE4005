@@ -3,7 +3,7 @@ INC_DIR = ./include
 SRC_DIR = ./src
 
 CC = g++
-CFLAGS = -std=c++14 -g -Wall -O3
+CFLAGS = -std=c++14
 
 INCLUDES = -I$(INC_DIR)
 LIBS = -lpthread -lm
@@ -13,7 +13,10 @@ SRCS := $(wildcard $(SRC_DIR)/*.cpp)
 OBJS := $(SRCS:.c=.o)
 
 apriori: $(OBJS)
-	$(CC) $(CFLAGS) -o $(BIN_DIR)/apriori $(OBJS) $(INCLUDES) $(LIBS)
+	$(CC) $(CFLAGS) -o $(BIN_DIR)/apriori $(OBJS) $(INCLUDES) $(LIBS) -O3
+
+apriori_debug: $(OBJS)
+	$(CC) $(CFLAGS) -o $(BIN_DIR)/apriori $(OBJS) $(INCLUDES) $(LIBS) -g -Wall -O0
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of

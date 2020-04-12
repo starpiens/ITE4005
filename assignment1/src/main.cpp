@@ -49,7 +49,7 @@ vector<Item *> read_items(ifstream &ifs) {
  * @return Vector of pointer of frequent item sets.
  */
 // TODO: find only max patterns
-vector<ItemSet *> find_frequent_patterns(const vector<Item *> &items, const int min_support) {
+vector<ItemSet *> find_frequent_patterns(vector<Item *> &items, const int min_support) {
 
     auto freq_end = remove_if(items.begin(),
                               items.end(),
@@ -66,14 +66,16 @@ vector<ItemSet *> find_frequent_patterns(const vector<Item *> &items, const int 
         // Generate
         for (auto i = prev_begin; i != freq_item_sets.size(); i++) {
             for (auto j = i + 1; j != freq_item_sets.size(); j++) {
-                auto uni = Item::get_union(freq_item_sets[i], freq_item_sets[j]);
+                auto &ii = freq_item_sets[i];
+                auto &jj = freq_item_sets[j];
+                auto uni = Item::get_union(ii, jj);
                 if (uni->size() == k) {
-                    auto &tmp = candidate_item_sets[uni->items];
-                    if (tmp == nullptr) {
-                        tmp = uni;
+                    auto &uni_pos = candidate_item_sets[uni->items];
+                    if (uni_pos == nullptr) {
+                        uni_pos = uni;
                     } else {
-                        tmp->add_child(freq_item_sets[i]);
-                        tmp->add_child(freq_item_sets[j]);
+                        uni_pos->add_child(ii);
+                        uni_pos->add_child(jj);
                     }
                 } else {
                     delete uni;
@@ -102,27 +104,25 @@ vector<ItemSet *> find_frequent_patterns(const vector<Item *> &items, const int 
  * @param rules Vector of association rules.
  * @return `ofs`.
  */
-ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
-   for (const auto &rule : rules) {
-       ofs << "{" << *rule.itemset->items.cbegin();
-       for (auto it = ++rule.itemset->items.cbegin(); it != rule.itemset->items.cend(); it++) {
-           ofs << "," << *it;
-       }
-       ofs << "}\t";
-       ofs << "{" << *rule.assc_itemset->items.cbegin();
-       for (auto it = ++rule.assc_itemset->items.cbegin(); it != rule.assc_itemset->items.cend(); it++) {
-           ofs << "," << *it;
-       }
-       ofs << "}\t";
-       auto ori_precision = ofs.precision();
-       ofs << fixed;
-       ofs.precision(2);
-       ofs << 100. * rule.support / num_txns << "\t";
-       ofs << 100. * rule.confidence << "\n";
-       ofs.unsetf(ios::fixed);
-       ofs.precision(ori_precision);
-   }
-   return ofs;
+ofstream &operator<<(ofstream &ofs, const AssociationRule &rule) {
+    ofs << "{" << *rule.itemset->items.cbegin();
+    for (auto it = ++rule.itemset->items.cbegin(); it != rule.itemset->items.cend(); it++) {
+        ofs << "," << *it;
+    }
+    ofs << "}\t";
+    ofs << "{" << *rule.assc_itemset->items.cbegin();
+    for (auto it = ++rule.assc_itemset->items.cbegin(); it != rule.assc_itemset->items.cend(); it++) {
+        ofs << "," << *it;
+    }
+    ofs << "}\t";
+    auto ori_precision = ofs.precision();
+    ofs << fixed;
+    ofs.precision(2);
+    ofs << 100. * rule.assc_itemset->support() / num_txns << "\t";
+    ofs << 100. * rule.assc_itemset->support() / rule.itemset->support() << "\n";
+    ofs.unsetf(ios::fixed);
+    ofs.precision(ori_precision);
+    return ofs;
 }
 
 /**
@@ -131,20 +131,16 @@ ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
  * @param min_support Minimum support value.
  * @return Vector of association rules.
  */
-void find_association_rules(ofstream &ofs, const vector<Item *> &items, const int min_support) {
+void find_association_rules(ofstream &ofs, vector<Item *> &items, const int min_support) {
     auto freq_patterns = find_frequent_patterns(items, min_support);
 
-    vector<AssociationRule> rules;
-
     for (auto &pattern : freq_patterns) {
-
         auto descendants = pattern->get_descendants();
         for (auto &descendant : descendants) {
-
+            ofs << AssociationRule(descendant, pattern);
+            num_assc_rules++;
         }
     }
-
-    return assc_rules;
 }
 
 /**
@@ -180,13 +176,14 @@ int main(int argc, char *argv[]) {
     auto time_start = chrono::steady_clock::now();
 
     auto items = read_items(ifs);
-    int min_support = ceil((double)min_support_percent * num_txns / 100.);
+    int min_support = ceil((double) min_support_percent * num_txns / 100.);
     find_association_rules(ofs, items, min_support);
 
     auto time_end = chrono::steady_clock::now();
-    cout << "Done.\nTotal Time elapsed: "
+    cout << "Done." << endl;
+    cout << "Found " << num_assc_rules << " association rules in "
          << chrono::duration_cast<chrono::milliseconds>(time_end - time_start).count()
-         << "ms";
+         << "ms." << endl;
 
     ifs.close();
     ofs.close();

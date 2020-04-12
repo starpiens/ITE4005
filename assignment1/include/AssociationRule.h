@@ -5,16 +5,14 @@
 #include "Item.h"
 
 
-class AssociationRule {
+struct AssociationRule {
 public:
-  AssociationRule(ItemSet *itemset, ItemSet *assc_itemset, size_t num_support, float confidence);
-
+  AssociationRule(ItemSet *itemset, ItemSet *assc_itemset) :
+          itemset(itemset), assc_itemset(assc_itemset) {}
   ~AssociationRule() = default;
 
   ItemSet *itemset;
   ItemSet *assc_itemset;
-  size_t support;
-  float confidence;
 };
 
 

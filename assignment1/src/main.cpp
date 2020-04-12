@@ -102,17 +102,16 @@ vector<ItemSet *> find_frequent_patterns(const vector<Item *> &items, const int 
  * @param rules Vector of association rules.
  * @return `ofs`.
  */
-/*
 ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
    for (const auto &rule : rules) {
-       ofs << "{" << rule.item_set.items.cbegin()->id;
-       for (auto it = ++rule.item_set.items.cbegin(); it != rule.item_set.items.cend(); it++) {
-           ofs << "," << it->id;
+       ofs << "{" << *rule.itemset->items.cbegin();
+       for (auto it = ++rule.itemset->items.cbegin(); it != rule.itemset->items.cend(); it++) {
+           ofs << "," << *it;
        }
        ofs << "}\t";
-       ofs << "{" << rule.assc_item_set.items.cbegin()->id;
-       for (auto it = ++rule.assc_item_set.items.cbegin(); it != rule.assc_item_set.items.cend(); it++) {
-           ofs << "," << it->id;
+       ofs << "{" << *rule.assc_itemset->items.cbegin();
+       for (auto it = ++rule.assc_itemset->items.cbegin(); it != rule.assc_itemset->items.cend(); it++) {
+           ofs << "," << *it;
        }
        ofs << "}\t";
        auto ori_precision = ofs.precision();
@@ -125,7 +124,6 @@ ofstream &operator<<(ofstream &ofs, const vector<AssociationRule> &rules) {
    }
    return ofs;
 }
- */
 
 /**
  * Find association rules.
@@ -183,8 +181,7 @@ int main(int argc, char *argv[]) {
 
     auto items = read_items(ifs);
     int min_support = ceil((double)min_support_percent * num_txns / 100.);
-    auto assc_rules = find_association_rules(items, min_support);
-    ofs << assc_rules;
+    find_association_rules(ofs, items, min_support);
 
     auto time_end = chrono::steady_clock::now();
     cout << "Done.\nTotal Time elapsed: "

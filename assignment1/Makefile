@@ -13,14 +13,11 @@ INCS := $(wildcard $(INC_DIR)/*.h)
 SRCS := $(wildcard $(SRC_DIR)/*.cpp)
 OBJS := $(SRCS:.cpp=.o)
 
-$(info $(SRCS))
-$(info $(OBJS))
-
 $(TARGET): $(OBJS)
 	$(CC) $(CXXFLAGS) -o $(BIN_DIR)/$@ $^ $(INCLUDES) $(LIBS)
 
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) -c -o $@ $< $(INCLUDES) $(LIBS) -O3
+	$(CC) $(CXXFLAGS) -c -o $@ $< $(INCLUDES) $(LIBS)
 
 clean:
 	$(RM) $(BIN_DIR)/$(TARGET) $(OBJS)

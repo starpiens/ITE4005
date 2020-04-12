@@ -4,14 +4,19 @@
 
 
 
-- [**Assignment #1**](assignment1): Apriori  
-  (Short term project #1)
-  
-- **Assignment #2**: TBD  
-  (Short term project #2)
-  
-- **Assignment #3**: TBD  
-  (Short term project #3)
+#### Assignment #1
 
-- [**Assignment #4**](assignment4): Recommender system  
-  (Long term project)
+Finding frequent pattern with Apriori algorithm. [[code]](assignment1) [[report]](assignment1/doc/report.pdf)
+
+#### Assignment #2
+
+Building a decision tree.
+
+#### Assignment #3
+
+TBD
+
+#### Assignment #4
+
+Long term Project: Recommender system. [[code]](assignment4)
+

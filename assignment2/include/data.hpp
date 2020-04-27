@@ -4,7 +4,7 @@
 #include "attribute.hpp"
 
 struct Data {
-  std::vector<valued_attribute> attr;
+  std::vector<valued_attribute> attrs;
   valued_attribute val;
 };
 

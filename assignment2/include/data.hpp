@@ -3,11 +3,11 @@
 
 #include "attribute.hpp"
 
-struct Data {
+struct data {
   std::vector<valued_attribute> attrs;
-  valued_attribute val;
+  valued_attribute label;
 };
 
-std::vector<Data> read_data;
+std::vector<data> read_data(std::ifstream& ifs, const std::vector<attribute_base*>& attributes, attribute_base *label);
 
 #endif //ASSIGNMENT2_DATA_HPP

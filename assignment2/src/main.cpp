@@ -4,21 +4,7 @@
 #include <sstream>
 
 #include "attribute.hpp"
-
-std::vector<attribute_base*> read_attributes(std::ifstream& ifs) {
-    std::vector<attribute_base*> attributes;
-    using attr_val_t = std::string;
-
-    std::string line;
-    std::getline(ifs, line);
-    std::istringstream iss(line);
-    attr_val_t name;
-    for (int id = 0; iss >> name; id++) {
-        attributes.push_back(static_cast<attribute_base*>(new attribute<attr_val_t>(id, name)));
-    }
-
-    return attributes;
-}
+#include "data.hpp"
 
 int main(int argc, char* argv[]) {
     std::ifstream train_stream(argv[1]);
@@ -27,10 +13,20 @@ int main(int argc, char* argv[]) {
 
     // Train
     auto attributes = read_attributes(train_stream);
+    auto label = attributes.back();
+    attributes.pop_back();
+    auto data = read_data(train_stream, attributes, label);
     train_stream.close();
-    for (auto attr : attributes) {
-        std::cout << attr->id() << " " << attr->name() << std::endl;
-    }
+
+    //for (auto d : data) {
+        for (auto a : data[0].attrs) {
+            std::cout << a.get_attr()->name() << ": ";
+            a.get_attr()->write_value(std::cout, a.get_val_id());
+            std::cout << std::endl;
+        }
+        std::cout << "label = " << data[0].label.get_attr()->name() << ": ";
+        data[0].label.get_attr()->write_value(std::cout, data[0].label.get_val_id());
+    //}
 
     // Test
 

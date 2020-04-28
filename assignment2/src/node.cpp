@@ -138,7 +138,7 @@ node* construct_tree(const std::vector<data>& vec_data, std::unordered_set<attri
             n->_label = c.first;
         }
     }
-    if (info(vec_data) < .4)
+    if (count.size() == 1)
         return n;
 
     auto selected_attr = select_attribute_gain_ratio(vec_data, attrs);

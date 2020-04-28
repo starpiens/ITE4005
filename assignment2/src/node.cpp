@@ -30,23 +30,28 @@ info(const std::vector<data>& vec_data) {
     double ret = 0;
     for (auto& i : count) {
         double pi = (double) i.second / vec_data.size();
-        ret -= pi * log(pi);
+        ret -= pi * log2(pi);
     }
     return ret;
 }
 
 static double
-info(const std::unordered_map<attribute_base::val_id, std::vector<data>>& categorized_data) {
+info(
+        const std::unordered_map<attribute_base::val_id,
+        std::vector<data>>& categorized_data,
+        size_t total_sz) {
     double ret = 0;
     for (auto& i : categorized_data) {
-        double w = (double) i.second.size() / categorized_data.size();
+        double w = (double) i.second.size() / total_sz;
         ret += w * info(i.second);
     }
     return ret;
 }
 
 static std::unordered_map<attribute_base::val_id, std::vector<data>>
-categorize_data(const std::vector<data>& vec_data, attribute_base* attr) {
+categorize_data(
+        const std::vector<data>& vec_data,
+        attribute_base* attr) {
     std::unordered_map<attribute_base::val_id, std::vector<data>> categorized_data;
     for (auto& d : vec_data) {
         categorized_data[d.attrs.at(attr)].push_back(d);
@@ -59,13 +64,14 @@ std::pair<
         attribute_base*,
         std::unordered_map<
                 attribute_base::val_id, std::vector<data>>>
-select_attribute(const std::vector<data>& vec_data, const std::unordered_set<attribute_base*>& attrs) {
+select_attribute_info_gain(const std::vector<data>& vec_data, const std::unordered_set<attribute_base*>& attrs) {
+
     double min_info = std::numeric_limits<double>::max();
     attribute_base* selected_attr = nullptr;
     std::unordered_map<attribute_base::val_id, std::vector<data>> selected_attr_categorized_data;
     for (auto attr : attrs) {
         auto categorized_data = categorize_data(vec_data, attr);
-        double current_info = info(categorized_data);
+        double current_info = info(categorized_data, vec_data.size());
         if (min_info > current_info) {
             min_info = current_info;
             selected_attr = attr;
@@ -75,9 +81,48 @@ select_attribute(const std::vector<data>& vec_data, const std::unordered_set<att
     return {selected_attr, selected_attr_categorized_data};
 }
 
+static double
+split_info(
+        const std::unordered_map<attribute_base::val_id, std::vector<data>>& categorized_data,
+        size_t total_sz) {
+    double ret = 0;
+    for (auto& i : categorized_data) {
+        double tmp = (double)i.second.size() / total_sz;
+        ret -= tmp * log2(tmp);
+    }
+    return ret;
+}
+
+static
+std::pair<
+        attribute_base*,
+        std::unordered_map<
+                attribute_base::val_id, std::vector<data>>>
+select_attribute_gain_ratio(
+        const std::vector<data>& vec_data,
+        const std::unordered_set<attribute_base*>& attrs) {
+
+    double max_gain_ratio = -1;
+    attribute_base* selected_attr = nullptr;
+    std::unordered_map<attribute_base::val_id, std::vector<data>> selected_attr_categorized_data;
+    for (auto attr : attrs) {
+        auto categorized_data = categorize_data(vec_data, attr);
+        double gain = info(vec_data) - info(categorized_data, vec_data.size());
+        double gain_ratio = gain / split_info(categorized_data, vec_data.size());
+        if (max_gain_ratio < gain_ratio) {
+            max_gain_ratio = gain_ratio;
+            selected_attr = attr;
+            selected_attr_categorized_data = categorized_data;
+        }
+    }
+    return {selected_attr, selected_attr_categorized_data};
+}
+
+
 node* construct_tree(const std::vector<data>& vec_data, std::unordered_set<attribute_base*> attrs) {
     auto count = count_label(vec_data);
-    if (count.size() == 1) return nullptr;
+    if (count.size() == 1)
+        return nullptr;
 
     node* n = new node();
     size_t max_count = 0;
@@ -88,7 +133,7 @@ node* construct_tree(const std::vector<data>& vec_data, std::unordered_set<attri
         }
     }
 
-    auto selected_attr = select_attribute(vec_data, attrs);
+    auto selected_attr = select_attribute_gain_ratio(vec_data, attrs);
     n->_attr = selected_attr.first;
     attrs.erase(selected_attr.first);
     if (!attrs.empty() && selected_attr.second.size() > 1) {

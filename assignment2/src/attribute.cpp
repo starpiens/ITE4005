@@ -15,20 +15,3 @@ std::vector<attribute_base*> read_attributes(std::ifstream& ifs) {
 
     return attributes;
 }
-
-/*
-valued_attribute::valued_attribute(attribute_base* attr, attribute_base::val_id val_id) {
-    _attr = attr;
-    _val_id = val_id;
-}
-
-void valued_attribute::set(attribute_base* attr, attribute_base::val_id val_id) {
-    _attr = attr;
-    _val_id = val_id;
-}
-
-valued_attribute::valued_attribute(attribute_base* attr, void* val) {
-    _attr = attr;
-    _val_id = attr->get_id(val);
-}
-*/

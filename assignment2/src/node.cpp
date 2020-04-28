@@ -1,5 +1,19 @@
 #include "node.hpp"
 
+node::~node() {
+    for (auto& i : _children) {
+        delete i.second;
+    }
+}
+
+attribute_base::val_id node::infer(const data& d) const {
+    auto val = d.attrs.at(_attr);
+    if (_children.at(val) != nullptr)
+        return _children.at(val)->infer(d);
+    else
+        return _label;
+}
+
 static std::unordered_map<attribute_base::val_id, size_t>
 count_label(const std::vector<data>& vec_data) {
     std::unordered_map<attribute_base::val_id, size_t> count;
@@ -39,23 +53,15 @@ categorize_data(const std::vector<data>& vec_data, attribute_base* attr) {
     return categorized_data;
 }
 
-node* construct_tree(const std::vector<data>& vec_data, std::unordered_set<attribute_base*> attrs) {
-    auto count = count_label(vec_data);
-    if (count.size() == 1) return nullptr;
-
-    node *n = new node();
-    size_t max_count = 0;
-    for (auto& c : count) {
-        if (max_count < c.second) {
-            max_count = c.second;
-            n->_label = c.first;
-        }
-    }
-
+static
+std::pair<
+        attribute_base*,
+        std::unordered_map<
+                attribute_base::val_id, std::vector<data>>>
+select_attribute(const std::vector<data>& vec_data, const std::unordered_set<attribute_base*>& attrs) {
     double min_info = std::numeric_limits<double>::max();
     attribute_base* selected_attr = nullptr;
     std::unordered_map<attribute_base::val_id, std::vector<data>> selected_attr_categorized_data;
-
     for (auto attr : attrs) {
         auto categorized_data = categorize_data(vec_data, attr);
         double current_info = info(categorized_data);
@@ -65,10 +71,27 @@ node* construct_tree(const std::vector<data>& vec_data, std::unordered_set<attri
             selected_attr_categorized_data = categorized_data;
         }
     }
-    n->_attr = selected_attr;
-    attrs.erase(selected_attr);
-    if (!attrs.empty() && selected_attr_categorized_data.size() > 1) {
-        for (auto& i : selected_attr_categorized_data) {
+    return {selected_attr, selected_attr_categorized_data};
+}
+
+node* construct_tree(const std::vector<data>& vec_data, std::unordered_set<attribute_base*> attrs) {
+    auto count = count_label(vec_data);
+    if (count.size() == 1) return nullptr;
+
+    node* n = new node();
+    size_t max_count = 0;
+    for (auto& c : count) {
+        if (max_count < c.second) {
+            max_count = c.second;
+            n->_label = c.first;
+        }
+    }
+
+    auto selected_attr = select_attribute(vec_data, attrs);
+    n->_attr = selected_attr.first;
+    attrs.erase(selected_attr.first);
+    if (!attrs.empty() && selected_attr.second.size() > 1) {
+        for (auto& i : selected_attr.second) {
             n->_children[i.first] = construct_tree(i.second, attrs);
         }
     }

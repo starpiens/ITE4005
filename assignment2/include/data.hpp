@@ -8,6 +8,9 @@ struct data {
   std::pair<attribute_base*, attribute_base::val_id> label;
 };
 
-std::vector<data> read_data(std::ifstream& ifs, const std::vector<attribute_base*>& attributes, attribute_base *label);
+std::vector<data>
+read_data(std::ifstream& ifs,
+          const std::vector<attribute_base*>& attributes,
+          attribute_base* label = nullptr);
 
 #endif //ASSIGNMENT2_DATA_HPP

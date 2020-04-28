@@ -20,7 +20,7 @@ protected:
 public:
   explicit attribute_base(val_id id) : _id(id) {}
   attribute_base(val_id id, std::string name) : attribute_base(id) { _name = std::move(name); }
-  ~attribute_base() = default;
+  virtual ~attribute_base() = default;
 
   val_id id() const { return _id; }
   std::string name() const { return _name; }
@@ -69,24 +69,6 @@ template<typename Val>
 void attribute<Val>::write_value(std::ostream& ofs, val_id id) const {
     ofs << _id_to_val[id];
 }
-
-/*
-class valued_attribute {
-  attribute_base* _Nonnull _attr;
-  attribute_base::val_id _val_id;
-
-public:
-  valued_attribute() = default;
-  valued_attribute(attribute_base* _Nonnull attr, attribute_base::val_id val_id);
-  valued_attribute(attribute_base* _Nonnull attr, void* _Nonnull val);
-  ~valued_attribute() = default;
-
-  void set(attribute_base* _Nonnull attr, attribute_base::val_id val_id);
-
-  const attribute_base* _Nonnull get_attr() const { return _attr; }
-  attribute_base::val_id get_val_id() const { return _val_id; }
-};
- */
 
 std::vector<attribute_base*> read_attributes(std::ifstream& ifs);
 

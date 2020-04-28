@@ -6,11 +6,12 @@
 #include "data.hpp"
 
 struct node {
-  attribute_base* _Nonnull _attr;
+  attribute_base* _Nonnull _attr{};
   std::unordered_map<attribute_base::val_id, node*> _children;
-  attribute_base::val_id _label;
+  attribute_base::val_id _label{};
 
   explicit node() = default;
+  ~node();
   attribute_base::val_id infer(const data& d) const;
 };
 

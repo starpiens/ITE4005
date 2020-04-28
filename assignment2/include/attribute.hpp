@@ -82,7 +82,7 @@ public:
 
   void set(attribute_base* _Nonnull attr, attribute_base::val_id val_id);
 
-  const attribute_base* get_attr() const { return _attr; }
+  const attribute_base* _Nonnull get_attr() const { return _attr; }
   attribute_base::val_id get_val_id() const { return _val_id; }
 };
 

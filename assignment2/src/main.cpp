@@ -36,12 +36,12 @@ int main(int argc, char* argv[]) {
     test_stream.close();
 
     for (auto& attr : train_attributes)
-        result_stream << attr->name() << " ";
-    result_stream << std::endl;
+        result_stream << attr->name() << "\t";
+    result_stream << label->name() << std::endl;
     for (auto& d : vec_test_data) {
-        for (auto& i : d.attrs) {
-            i.first->write_value(result_stream, i.second);
-            result_stream << " ";
+        for (auto i : train_attributes) {
+            i->write_value(result_stream, d.attrs[i]);
+            result_stream << "\t";
         }
         auto i = tree->infer(d);
         label->write_value(result_stream, i);

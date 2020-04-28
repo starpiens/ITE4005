@@ -8,10 +8,11 @@ node::~node() {
 
 attribute_base::val_id node::infer(const data& d) const {
     auto val = d.attrs.at(_attr);
-    if (_children.at(val) != nullptr)
-        return _children.at(val)->infer(d);
-    else
-        return _label;
+    try {
+        if (_children.at(val) != nullptr)
+            return _children.at(val)->infer(d);
+    } catch (std::out_of_range& e) {}
+    return _label;
 }
 
 static std::unordered_map<attribute_base::val_id, size_t>

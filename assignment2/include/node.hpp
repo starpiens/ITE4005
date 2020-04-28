@@ -6,8 +6,8 @@
 #include "data.hpp"
 
 struct node {
-  attribute_base* _Nonnull _attr{};
-  std::unordered_map<attribute_base::val_id, node*> _children;
+  attribute_base* _Nullable _attr{ nullptr };
+  std::unordered_map<attribute_base::val_id, node* _Nonnull> _children;
   attribute_base::val_id _label{};
 
   explicit node() = default;

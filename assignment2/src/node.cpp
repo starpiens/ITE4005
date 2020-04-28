@@ -7,11 +7,12 @@ node::~node() {
 }
 
 attribute_base::val_id node::infer(const data& d) const {
+    if (_attr == nullptr)
+        return _label;
     auto val = d.attrs.at(_attr);
     try {
-        if (_children.at(val) != nullptr)
-            return _children.at(val)->infer(d);
-    } catch (std::out_of_range& e) {}
+        return _children.at(val)->infer(d);
+    } catch (std::out_of_range& e) {}   // Not learned from train data
     return _label;
 }
 
@@ -87,7 +88,7 @@ split_info(
         size_t total_sz) {
     double ret = 0;
     for (auto& i : categorized_data) {
-        double tmp = (double)i.second.size() / total_sz;
+        double tmp = (double) i.second.size() / total_sz;
         ret -= tmp * log2(tmp);
     }
     return ret;
@@ -120,11 +121,9 @@ select_attribute_gain_ratio(
 
 
 node* construct_tree(const std::vector<data>& vec_data, std::unordered_set<attribute_base*> attrs) {
-    auto count = count_label(vec_data);
-    if (count.size() == 1)
-        return nullptr;
-
     node* n = new node();
+
+    auto count = count_label(vec_data);
     size_t max_count = 0;
     for (auto& c : count) {
         if (max_count < c.second) {
@@ -132,6 +131,8 @@ node* construct_tree(const std::vector<data>& vec_data, std::unordered_set<attri
             n->_label = c.first;
         }
     }
+    if (count.size() == 1)
+        return n;
 
     auto selected_attr = select_attribute_gain_ratio(vec_data, attrs);
     n->_attr = selected_attr.first;

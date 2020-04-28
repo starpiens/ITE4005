@@ -39,7 +39,7 @@ info(const std::vector<data>& vec_data) {
 static double
 info(
         const std::unordered_map<attribute_base::val_id,
-        std::vector<data>>& categorized_data,
+                std::vector<data>>& categorized_data,
         size_t total_sz) {
     double ret = 0;
     for (auto& i : categorized_data) {
@@ -60,7 +60,7 @@ categorize_data(
     return categorized_data;
 }
 
-static
+__unused static
 std::pair<
         attribute_base*,
         std::unordered_map<
@@ -94,6 +94,14 @@ split_info(
     return ret;
 }
 
+static double
+compute_gain_ratio(
+        const std::vector<data>& vec_data,
+        const std::unordered_map<attribute_base::val_id, std::vector<data>>& categorized_data) {
+    double gain = info(vec_data) - info(categorized_data, vec_data.size());
+    return gain / split_info(categorized_data, vec_data.size());
+}
+
 static
 std::pair<
         attribute_base*,
@@ -108,8 +116,7 @@ select_attribute_gain_ratio(
     std::unordered_map<attribute_base::val_id, std::vector<data>> selected_attr_categorized_data;
     for (auto attr : attrs) {
         auto categorized_data = categorize_data(vec_data, attr);
-        double gain = info(vec_data) - info(categorized_data, vec_data.size());
-        double gain_ratio = gain / split_info(categorized_data, vec_data.size());
+        double gain_ratio = compute_gain_ratio(vec_data, categorized_data);
         if (max_gain_ratio < gain_ratio) {
             max_gain_ratio = gain_ratio;
             selected_attr = attr;
@@ -131,16 +138,18 @@ node* construct_tree(const std::vector<data>& vec_data, std::unordered_set<attri
             n->_label = c.first;
         }
     }
-    if (count.size() == 1)
+    if (info(vec_data) < .4)
         return n;
 
     auto selected_attr = select_attribute_gain_ratio(vec_data, attrs);
+    if (selected_attr.second.size() <= 1 || attrs.size() <= 1
+        || compute_gain_ratio(vec_data, selected_attr.second) < .1)
+        return n;
     n->_attr = selected_attr.first;
     attrs.erase(selected_attr.first);
-    if (!attrs.empty() && selected_attr.second.size() > 1) {
-        for (auto& i : selected_attr.second) {
+    for (auto& i : selected_attr.second) {
+        if (i.second.size() > vec_data.size() * .05)
             n->_children[i.first] = construct_tree(i.second, attrs);
-        }
     }
     return n;
 }

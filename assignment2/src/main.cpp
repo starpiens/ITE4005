@@ -16,9 +16,13 @@ int main(int argc, char* argv[]) {
     auto attributes = read_attributes(train_stream);
     auto label = attributes.back();
     attributes.pop_back();
-    auto data = read_data(train_stream, attributes, label);
+    auto vec_data = read_data(train_stream, attributes, label);
     train_stream.close();
-    auto tree = node(data, attributes);
+
+    std::unordered_set<attribute_base*> set_attrs;
+    for (auto& attr : attributes)
+        set_attrs.insert(attr);
+    auto tree = construct_tree(vec_data, set_attrs);
 
     // Test
 

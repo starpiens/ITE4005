@@ -6,20 +6,14 @@
 #include "data.hpp"
 
 struct node {
-  attribute_base* _Nonnull attr;
-  std::vector<node* _Nonnull> children;
+  attribute_base* _Nonnull _attr;
+  std::unordered_map<attribute_base::val_id, node*> _children;
+  attribute_base::val_id _label;
 
-  attribute_base::val_id infer(data d) const;
+  explicit node() = default;
+  attribute_base::val_id infer(const data& d) const;
 };
 
-struct train_node {
-  node* _Nonnull _n;
-  std::vector<data> _vec_data;
-  std::vector<attribute_base*> _attrs;
-  std::vector<train_node*> children;
-
-  train_node(std::vector<data> vec_data, std::vector<attribute_base*> attrs);
-  ~train_node();
-};
+node* _Nullable construct_tree(const std::vector<data>& vec_data, std::unordered_set<attribute_base*> attrs);
 
 #endif //ASSIGNMENT2_NODE_HPP

@@ -70,6 +70,7 @@ void attribute<Val>::write_value(std::ostream& ofs, val_id id) const {
     ofs << _id_to_val[id];
 }
 
+/*
 class valued_attribute {
   attribute_base* _Nonnull _attr;
   attribute_base::val_id _val_id;
@@ -85,6 +86,7 @@ public:
   const attribute_base* _Nonnull get_attr() const { return _attr; }
   attribute_base::val_id get_val_id() const { return _val_id; }
 };
+ */
 
 std::vector<attribute_base*> read_attributes(std::ifstream& ifs);
 

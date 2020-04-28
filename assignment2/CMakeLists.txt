@@ -8,4 +8,4 @@ include_directories(include)
 
 add_executable(assignment2
         src/main.cpp
-        include/attribute.hpp src/attribute.cpp include/data.hpp src/data.cpp)
+        include/attribute.hpp src/attribute.cpp include/data.hpp src/data.cpp include/node.hpp src/node.cpp)

@@ -5,6 +5,7 @@
 
 #include "attribute.hpp"
 #include "data.hpp"
+#include "node.hpp"
 
 int main(int argc, char* argv[]) {
     std::ifstream train_stream(argv[1]);
@@ -17,18 +18,7 @@ int main(int argc, char* argv[]) {
     attributes.pop_back();
     auto data = read_data(train_stream, attributes, label);
     train_stream.close();
-
-    for (auto d : data) {
-        for (auto a : d.attrs) {
-            std::cout << a.get_attr()->name() << " = ";
-            std::cout << a.get_val_id() << " : ";
-            a.get_attr()->write_value(std::cout, a.get_val_id());
-            std::cout << std::endl;
-        }
-        std::cout << "label = " << d.label.get_attr()->name() << ": ";
-        d.label.get_attr()->write_value(std::cout, d.label.get_val_id());
-        std::cout << std::endl << std::endl;
-    }
+    auto tree = node(data, attributes);
 
     // Test
 

@@ -33,8 +33,8 @@ public:
 
 template<typename Val>
 class attribute : public attribute_base {
-  std::unordered_map<Val, val_id> val_to_id;
-  std::vector<Val> id_to_val;
+  std::unordered_map<Val, val_id> _val_to_id;
+  std::vector<Val> _id_to_val;
 
 public:
   explicit attribute(val_id id) : attribute_base(id) {}
@@ -49,13 +49,13 @@ public:
 template<typename Val>
 attribute_base::val_id attribute<Val>::get_id(void* _Nonnull value) {
     auto& val_casted = *static_cast<Val*>(value);
-    auto it = val_to_id.find(val_casted);
-    if (it != val_to_id.end()) {
+    auto it = _val_to_id.find(val_casted);
+    if (it != _val_to_id.end()) {
         return it->second;
     }
-    val_to_id[val_casted] = val_to_id.size();
-    id_to_val.push_back(val_casted);
-    return val_to_id.size() - 1;
+    _val_to_id[val_casted] = _val_to_id.size();
+    _id_to_val.push_back(val_casted);
+    return _val_to_id.size() - 1;
 }
 
 template<typename Val>
@@ -67,7 +67,7 @@ attribute_base::val_id attribute<Val>::read_value(std::istringstream& iss) {
 
 template<typename Val>
 void attribute<Val>::write_value(std::ostream& ofs, val_id id) const {
-    ofs << id_to_val[id];
+    ofs << _id_to_val[id];
 }
 
 class valued_attribute {

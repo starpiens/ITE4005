@@ -2,17 +2,31 @@ import argparse
 from typing import List
 from tqdm import trange
 import os
+from multipledispatch import dispatch
 
 
-class data_object:
+class DataObject(object):
     def __init__(self, id, x, y):
         self.id = int(id)
         self.x = float(x)
         self.y = float(y)
 
 
-def DBSCAN(data_objects: List[data_object], eps: float, min_pts: int) \
-        -> List[List[data_object]]:
+class DBSCAN_Object(DataObject):
+    @dispatch(int, float, float)
+    def __init__(self, id: int, x: float, y: float):
+        super().__init__(id, x, y)
+        self.clustered = False
+
+    @dispatch(DataObject)
+    def __init__(self, obj: DataObject):
+        super().__init__(obj.id, obj.x, obj.y)
+        self.clustered = False
+
+
+
+def DBSCAN(data_objects: List[DataObject], eps: float, min_pts: int) \
+        -> List[List[DataObject]]:
     """
     Cluster `data_objects` using DBSCAN algorithm.
     :param data_objects: List of data objects.
@@ -21,43 +35,68 @@ def DBSCAN(data_objects: List[data_object], eps: float, min_pts: int) \
     :return: List of clusters which contains data objects.
     """
     clusters = []
-    is_clustered = [False] * len(data_objects)
+    objects = []
+    for obj in data_objects:
+        objects.append(DBSCAN_Object(obj))
 
-    for idx, obj in enumerate(data_objects):
-        # If clustered already, continue.
-        if is_clustered[idx]:
+    for idx, obj in enumerate(objects):
+        # If a object belongs to another cluster already, continue.
+        if obj.clustered:
             continue
 
-        neighbors = find_neighbors(data_objects, obj, eps)
-        # If it is not core point, it cannot be seed point.
-        if len(neighbors) <= min_pts:
-            continue
-
-        # Seed found, now form cluster.
-        clusters.append(form_cluster(data_objects, obj, is_clustered, eps, min_pts))
+        print(idx)
+        # If a cluster formed, append it.
+        cluster = form_cluster(objects, obj, eps, min_pts)
+        if cluster:
+            clusters.append(cluster)
 
     return clusters
 
 
-def find_neighbors(data_objects: List[data_object], center: data_object, eps: float) \
-        -> List[data_object]:
+def find_neighbors(objects: List[DBSCAN_Object], center: DBSCAN_Object, eps: float) \
+        -> List[DBSCAN_Object]:
     """
     Find list of neighbors, include itself.
-    :param data_objects: List of candidate of neighbors.
+    :param objects: List of candidate of neighbors.
     :param center: Center object.
     :param eps: Maximum distance of the neighborhood.
     :return: List of neighbors.
     """
     neighbors = []
-    for obj in data_objects:
+    for obj in objects:
         if (center.x - obj.x) ** 2 + (center.y - obj.y) ** 2 <= eps ** 2:
             neighbors.append(obj)
     return neighbors
 
 
-def form_cluster(data_objects, seed, is_clustered, eps, min_pts) \
-        -> List[data_object]:
-    return []
+def form_cluster(objects: List[DBSCAN_Object], seed: DBSCAN_Object, eps: float, min_pts: int) \
+        -> List[DBSCAN_Object]:
+    neighbors = find_neighbors(objects, seed, eps)
+
+    # It cannot be seed unless it is dense enough.
+    if len(neighbors) <= min_pts:
+        return []
+
+    cluster = []
+
+    # Prepare queue for BFS
+    queue = neighbors
+    for n in queue:
+        n.clustered = True
+    cluster += queue
+
+    # Run BFS
+    while queue:
+        neighbors = find_neighbors(objects, queue.pop(0), eps)
+        if len(neighbors) <= min_pts:
+            continue
+        for n in neighbors:
+            if not n.clustered:
+                n.clustered = True
+                cluster.append(n)
+                queue.append(n)
+
+    return cluster
 
 
 if __name__ == '__main__':
@@ -75,7 +114,7 @@ if __name__ == '__main__':
         line = f.readline()
         if line == '':
             break
-        objects.append(data_object(*line.split('\t')))
+        objects.append(DataObject(*line.split('\t')))
     f.close()
 
     # Get clustered data with DBSCAN.

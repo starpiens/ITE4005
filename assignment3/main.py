@@ -3,6 +3,10 @@ from typing import List
 from tqdm import trange
 import os
 from multipledispatch import dispatch
+import numpy as np
+
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 class DataObject(object):
@@ -32,7 +36,7 @@ def DBSCAN(data_objects: List[DataObject], eps: float, min_pts: int) \
     :param data_objects: List of data objects.
     :param eps: Maximum distance of the neighborhood.
     :param min_pts: Minimum number of neighbors to be core point.
-    :return: List of clusters which contains data objects.
+    :return: List of clusters which contains data objects. 
     """
     clusters = []
     objects = []
@@ -46,9 +50,9 @@ def DBSCAN(data_objects: List[DataObject], eps: float, min_pts: int) \
 
         print(idx)
         # If a cluster formed, append it.
-        cluster = form_cluster(objects, obj, eps, min_pts)
-        if cluster:
-            clusters.append(cluster)
+        new_cluster = form_cluster(objects, obj, eps, min_pts)
+        if new_cluster:
+            clusters.append(new_cluster)
 
     return clusters
 
@@ -99,6 +103,19 @@ def form_cluster(objects: List[DBSCAN_Object], seed: DBSCAN_Object, eps: float, 
     return cluster
 
 
+def draw_scatter(clustered: List[List[DataObject]]):
+    palette = np.array(sns.color_palette("hls", len(clustered)))
+    x, y, c = [], [], []
+    for i, c_i in enumerate(clustered):
+        for obj in c_i:
+            x.append(obj.x)
+            y.append(obj.y)
+            c.append(i)
+
+    plt.scatter(x, y, c=palette[c])
+    plt.show()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("data_path", help="path of input data file", type=str)
@@ -126,3 +143,5 @@ if __name__ == '__main__':
         for obj in cluster:
             f.write(str(obj.id) + "\n")
         f.close()
+
+    draw_scatter(clustered)

@@ -27,6 +27,22 @@ class DBSCAN_Object(DataObject):
         super().__init__(obj.id, obj.x, obj.y)
         self.clustered = False
 
+    def get_neighbors(self, objects, eps):
+        """
+        Find list of neighbors, including itself.
+        :param objects: List of candidate of neighbors.
+        :param center: Center object.
+        :param eps: Maximum distance of the neighborhood.
+        :return: List of neighbors.
+        """
+        if hasattr(self, "neighbors") and (self.objects is objects):
+            return self.neighbors
+        self.objects = objects
+        self.neighbors = []
+        for obj in objects:
+            if (self.x - obj.x) ** 2 + (self.y - obj.y) ** 2 <= eps ** 2:
+                self.neighbors.append(obj)
+        return self.neighbors
 
 
 def DBSCAN(data_objects: List[DataObject], eps: float, min_pts: int) \
@@ -61,41 +77,19 @@ def DBSCAN(data_objects: List[DataObject], eps: float, min_pts: int) \
     return clusters
 
 
-def find_neighbors(objects: List[DBSCAN_Object], center: DBSCAN_Object, eps: float) \
-        -> List[DBSCAN_Object]:
-    """
-    Find list of neighbors, include itself.
-    :param objects: List of candidate of neighbors.
-    :param center: Center object.
-    :param eps: Maximum distance of the neighborhood.
-    :return: List of neighbors.
-    """
-    neighbors = []
-    for obj in objects:
-        if (center.x - obj.x) ** 2 + (center.y - obj.y) ** 2 <= eps ** 2:
-            neighbors.append(obj)
-    return neighbors
-
-
 def form_cluster(objects: List[DBSCAN_Object], seed: DBSCAN_Object, eps: float, min_pts: int) \
         -> List[DBSCAN_Object]:
-    neighbors = find_neighbors(objects, seed, eps)
-
     # It cannot be seed unless it is dense enough.
-    if len(neighbors) <= min_pts:
+    if len(seed.get_neighbors(objects, eps)) <= min_pts:
         return []
 
-    cluster = []
-
-    # Prepare queue for BFS
-    queue = neighbors
-    for n in queue:
-        n.clustered = True
-    cluster += queue
+    cluster = [seed]
+    seed.clustered = True
 
     # Run BFS
+    queue = [seed]
     while queue:
-        neighbors = find_neighbors(objects, queue.pop(0), eps)
+        neighbors = queue.pop(0).get_neighbors(objects, eps)
         if len(neighbors) <= min_pts:
             continue
         for n in neighbors:

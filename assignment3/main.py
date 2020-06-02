@@ -36,7 +36,7 @@ def DBSCAN(data_objects: List[DataObject], eps: float, min_pts: int) \
     :param data_objects: List of data objects.
     :param eps: Maximum distance of the neighborhood.
     :param min_pts: Minimum number of neighbors to be core point.
-    :return: List of clusters which contains data objects. 
+    :return: List of clusters which contains data objects. Last cluster contains unclustered objects.
     """
     clusters = []
     objects = []
@@ -48,11 +48,15 @@ def DBSCAN(data_objects: List[DataObject], eps: float, min_pts: int) \
         if obj.clustered:
             continue
 
-        print(idx)
         # If a cluster formed, append it.
         new_cluster = form_cluster(objects, obj, eps, min_pts)
         if new_cluster:
             clusters.append(new_cluster)
+
+    clusters.append([])
+    for obj in objects:
+        if not obj.clustered:
+            clusters[-1].append(obj)
 
     return clusters
 
@@ -104,15 +108,16 @@ def form_cluster(objects: List[DBSCAN_Object], seed: DBSCAN_Object, eps: float, 
 
 
 def draw_scatter(clustered: List[List[DataObject]]):
-    palette = np.array(sns.color_palette("hls", len(clustered)))
+    palette = np.array(sns.color_palette("hls", len(clustered) - 1))
+    palette = np.append(palette, [[.7, .7, .7]], axis=0)
     x, y, c = [], [], []
-    for i, c_i in enumerate(clustered):
+    for i, c_i in reversed(list(enumerate(clustered))):
         for obj in c_i:
             x.append(obj.x)
             y.append(obj.y)
             c.append(i)
 
-    plt.scatter(x, y, c=palette[c])
+    plt.scatter(x, y, c=palette[c], s=5)
     plt.show()
 
 
@@ -139,6 +144,9 @@ if __name__ == '__main__':
 
     # Write clustered data.
     for idx, cluster in enumerate(clustered):
+        # Last cluster is unclustered objects.
+        if idx == len(clustered) - 1:
+            break
         f = open(os.path.splitext(args.data_path)[0] + "_cluster_{}.txt".format(idx), "w")
         for obj in cluster:
             f.write(str(obj.id) + "\n")

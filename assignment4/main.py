@@ -66,7 +66,8 @@ def main(train: bool):
     train_data = read_records(args.train_path)
     test_data = read_records(args.test_path)
 
-    model = cf_model(train_data['user_id'].max() + 1, train_data['item_id'].max() + 1)
+    model = cf_model(np.maximum(train_data['user_id'].max(), test_data['user_id'].max()) + 1,
+                     np.maximum(train_data['item_id'].max(), test_data['item_id'].max()) + 1)
     model.compile(optimizer=optimizers.Adam(1e-3),
                   loss=losses.mean_squared_error,
                   metrics=[metrics.RootMeanSquaredError()])

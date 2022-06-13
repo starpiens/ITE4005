@@ -1,6 +1,7 @@
 # ITE4005
 
-**Data Science**, Spring 2020.
+**Data Science**, Spring 2020, Hanyang University.  
+**데이터 사이언스**, 2020년 1학기, 한양대학교.
 
 - **Assignment #1:** Finding frequent pattern with Apriori algorithm.  
   [[spec]](assignment1/doc/spec.pdf) [[report]](assignment1/doc/report.pdf) [[code]](assignment1)
